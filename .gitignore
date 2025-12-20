@@ -1,0 +1,16 @@
+# 忽略所有视频
+*.mp4
+*.mov
+*.avi
+
+# 忽略大图（可选）
+*.psd
+*.tiff
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器临时文件
+.vscode/
+*.swp
