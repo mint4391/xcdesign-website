@@ -2,7 +2,10 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
     <title>个人视觉设计 | 周晓城</title>
 
     <!-- 浏览器 Logo -->
@@ -22,6 +25,13 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+      }
+
+      html {
+        -ms-text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+        /* 强制使用标准视口 */
+        -webkit-tap-highlight-color: transparent;
       }
 
       body {
@@ -88,6 +98,7 @@
         .container {
           width: 100%;
           margin-bottom: 1%;
+          margin-top: 1%;
           gap: 2px; /* 基础间距 */
           transition: 0.3s ease;
         }
