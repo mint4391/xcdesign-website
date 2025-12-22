@@ -670,7 +670,13 @@
       Fancybox.bind("[data-fancybox]", {
         Toolbar: {
           display: [
-            { id: "counter", position: "center" },
+            { id: "counter", 
+              position: "center",
+              // 禁用工具栏中的下载按钮
+              left: ["infobar"],
+              middle: [],
+              right: ["iterateZoom", "slideshow", "fullscreen", "thumbs", "close"],
+            },
             //"zoom",
             //"slideshow",
             "fullscreen",
@@ -685,7 +691,29 @@
         animated: true,
         hideScrollbar: true,
         trapFocus: false,
+        // 阻止弹出右键菜单（针对图片）
+        on: {
+              done: (fancybox, slide) => {
+                  if (slide.type === "image") {
+                  slide.$el.addEventListener("contextmenu", (e) => e.preventDefault());
+                  }
+              },
+        },
       });
+      
+      // 禁用右键
+      document.oncontextmenu = () => false;
+
+      // 禁用 F12, Ctrl+Shift+I (检查元素), Ctrl+U (查看源码)
+      document.onkeydown = (e) => {
+        if (
+          e.keyCode === 123 || 
+          (e.ctrlKey && e.shiftKey && e.keyCode === 73) || 
+          (e.ctrlKey && e.keyCode === 85)
+        ) {
+          return false;
+        }
+      };
     </script>
   </body>
 </html>
