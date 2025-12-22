@@ -83,9 +83,30 @@
 
       /* 去除视频播放器周围的虚线框 */
       .fancybox__content :focus,
-      .fancybox__content video:focus,
+      /* 隐藏原生视频控件 */
+      .fancybox__content video {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 80vh;
+        display: block;
+        pointer-events: none !important; /* 禁用鼠标交互 */
+      }
       .fancybox__content button:focus {
         outline: none !important;
+      }
+
+      .fancybox-content video {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 80vh;
+        display: block;
+        /* 关键：禁用浏览器因 hover/click 显示的临时控件 */
+        pointer-events: none !important;
+      }
+
+      /* WebKit 浏览器额外隐藏 */
+      .fancybox__content video::-webkit-media-controls {
+      display: none !important;
       }
 
       /*  Footer */
@@ -332,15 +353,9 @@
         class="media"
         data-fancybox="gallery"
         data-thumb="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/17.png?imageMogr2/thumbnail/200x/"
-        href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/18.mp4"
-      >
-        <video
-          src="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/18.mp4"
-          autoplay
-          loop
-          muted
-          playsinline
-        ></video>
+        data-src="<video src='https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/18.mp4' autoplay muted loop playsinline></video>"
+        href="javascript:;"
+        >
       </a>
 
       <a
@@ -371,15 +386,9 @@
         class="media"
         data-fancybox="gallery"
         data-thumb="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/20.png?imageMogr2/thumbnail/200x/"
-        href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/21.mp4"
-      >
-        <video
-          src="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/21.mp4"
-          autoplay
-          loop
-          muted
-          playsinline
-        ></video>
+        data-src="<video src='https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/21.mp4' autoplay muted loop playsinline></video>"
+        href="javascript:;"
+        >
       </a>
 
       <a
@@ -398,15 +407,9 @@
         class="media"
         data-fancybox="gallery"
         data-thumb="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/22.png?imageMogr2/thumbnail/200x/"
-        href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/23.mp4"
-      >
-        <video
-          src="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/23.mp4"
-          autoplay
-          loop
-          muted
-          playsinline
-        ></video>
+        data-src="<video src='https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/23.mp4' autoplay muted loop playsinline></video>"
+        href="javascript:;"
+        >
       </a>
 
       <a
@@ -497,15 +500,9 @@
         class="media"
         data-fancybox="gallery"
         data-thumb="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/30.png?imageMogr2/thumbnail/200x/"
-        href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/31.mp4"
-      >
-        <video
-          src="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/31.mp4"
-          autoplay
-          loop
-          muted
-          playsinline
-        ></video>
+        data-src="<video src='https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/31.mp4' autoplay muted loop playsinline></video>"
+        href="javascript:;"
+        >
       </a>
 
       <a
@@ -548,15 +545,9 @@
         class="media"
         data-fancybox="gallery"
         data-thumb="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/34.png?imageMogr2/thumbnail/200x/"
-        href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/35.mp4"
-      >
-        <video
-          src="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/35.mp4"
-          autoplay
-          loop
-          muted
-          playsinline
-        ></video>
+        data-src="<video src='https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/35.mp4' autoplay muted loop playsinline></video>"
+        href="javascript:;"
+        >
       </a>
 
       <a
@@ -611,15 +602,9 @@
         class="media"
         data-fancybox="gallery"
         data-thumb="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/39.png?imageMogr2/thumbnail/200x/"
-        href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/40.mp4"
-      >
-        <video
-          src="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/40.mp4"
-          autoplay
-          loop
-          muted
-          playsinline
-        ></video>
+        data-src="<video src='https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/41.mp4' autoplay muted loop playsinline></video>"
+        href="javascript:;"
+        >
       </a>
 
       <a
@@ -638,15 +623,9 @@
         class="media"
         data-fancybox="gallery"
         data-thumb="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/41.png?imageMogr2/thumbnail/200x/"
-        href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/42.mp4"
-      >
-        <video
-          src="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/42.mp4"
-          autoplay
-          loop
-          muted
-          playsinline
-        ></video>
+        data-src="<video src='https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/42.mp4' autoplay muted loop playsinline></video>"
+        href="javascript:;"
+        >
       </a>
 
       <a
@@ -704,6 +683,15 @@
               },
         },
       });
+
+      //禁用原生控件
+      video: {
+        controls: false,   //隐藏 HTML5 原生控件
+        autoplay: true,
+        muted: true,
+        loop: true,
+        playsinline: true
+      },
       
       // 禁用右键
       document.oncontextmenu = () => false;
