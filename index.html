@@ -83,14 +83,7 @@
 
       /* 去除视频播放器周围的虚线框 */
       .fancybox__content :focus,
-      /* 隐藏原生视频控件 */
-      .fancybox__content video {
-        width: 100% !important;
-        height: auto !important;
-        max-height: 80vh;
-        display: block;
-        pointer-events: none !important; /* 禁用鼠标交互 */
-      }
+      .fancybox__content:focus, 
       .fancybox__content button:focus {
         outline: none !important;
       }
@@ -98,7 +91,6 @@
       .fancybox-content video {
         width: 100% !important;
         height: auto !important;
-        max-height: 80vh;
         display: block;
         /* 关键：禁用浏览器因 hover/click 显示的临时控件 */
         pointer-events: none !important;
