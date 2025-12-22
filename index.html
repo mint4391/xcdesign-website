@@ -7,7 +7,8 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
     />
     <title>个人视觉设计 | 周晓城</title>
-
+    
+    <!-- 防止用户提前打开工作台 Logo -->
     <script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
 
     <!-- 浏览器 Logo -->
@@ -693,6 +694,7 @@
         animated: true,
         hideScrollbar: true,
         trapFocus: false,
+        
         // 阻止弹出右键菜单（针对图片）
         on: {
               done: (fancybox, slide) => {
