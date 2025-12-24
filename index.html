@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>个人视觉设计 | 周晓城</title>
+    <link rel="icon" href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/favicon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+    <style>
+        :root { --bg: #20252c; --accent: #007aff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: #fff; font-family: system-ui, sans-serif; }
+        
+        .container { width: 100%; max-width: 1200px; margin: 20px auto; padding: 0 15px; display: flex; flex-direction: column; gap: 20px; }
+        .media-item { display: block; width: 100%; background: #2a3039; border-radius: 8px; overflow: hidden; cursor: zoom-in; }
+        .media-item img, .media-item video { display: block; width: 100%; height: auto; border-radius: 8px; }
+
+        /* 修复序号显示 */
+        .fancybox__infobar { font-size: 16px; font-weight: bold; visibility: visible !important; }
+        
+        /* 缩略图优化：防止裁剪，完整显示 */
+        .f-thumbs__slide__button { padding: 0; }
+        .f-thumbs__slide__img { object-fit: contain !important; background: #000; }
+        .f-thumbs__slide.is-nav-selected { box-shadow: inset 0 0 0 3px var(--accent) !important; opacity: 1 !important; }
+
+        /* 视频全屏感：屏蔽所有控件与 Edge 辅助工具 */
+        .f-v-wrapper { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000; }
+        .v-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: transparent; }
+        video::-webkit-media-controls { display: none !important; }
+        
+        footer { padding: 40px 0; text-align: center; color: #555; font-size: 12px; }
+        @media (max-width: 768px) { .container { gap: 10px; padding: 0 10px; } .media-item { border-radius: 4px; } }
+    </style>
+</head>
+<body>
+    <main class="container" id="gallery-root"></main>
+    <footer><p>©周晓城 · All Rights Reserved</p></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+    <script>
+        const cos = "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
+        const root = document.getElementById('gallery-root');
+        
+        // 自动生成 43 个资源
+        const assets = [];
+        for(let i=1; i<=43; i++) {
+            // 视频 ID: 18, 21, 23, 31, 35, 40, 42
+            const vIds = [18, 21, 23, 31, 35, 40, 42];
+            const isV = vIds.includes(i);
+            assets.push({ id: i, type: isV ? 1 : 0, poster: isV ? (i-1) : i });
+        }
+
+        assets.forEach(item => {
+            const a = document.createElement('a');
+            a.className = 'media-item';
+            a.dataset.fancybox = 'gallery';
+            if (item.type === 0) {
+                a.href = `${cos}${item.id}.png`;
+                a.innerHTML = `<img src="${cos}${item.id}.png" loading="lazy">`;
+            } else {
+                a.href = `${cos}${item.id}.mp4`;
+                a.dataset.type = "html"; // 强行使用 HTML 模式避开内容探测
+                a.dataset.thumb = `${cos}${item.poster}.png`;
+                a.dataset.content = `
+                    <div class="f-v-wrapper">
+                        <div class="v-mask"></div>
+                        <video src="${cos}${item.id}.mp4" autoplay muted loop playsinline disablePictureInPicture controlslist="nodownload nofullscreen noremoteplayback" style="width:100%;max-height:100vh;"></video>
+                    </div>`;
+                a.innerHTML = `<video src="${cos}${item.id}.mp4" autoplay loop muted playsinline poster="${cos}${item.poster}.png"></video>`;
+            }
+            root.appendChild(a);
+        });
+
+        Fancybox.bind("[data-fancybox='gallery']", {
+            l10n: { COUNT: "{current} / {total}" },
+            Thumbs: { autoStart: true, type: "classic" }, // classic 模式缩略图更完整
+            Toolbar: { display: { left: ["infobar"], right: ["thumbs", "fullscreen", "close"] } },
+            on: {
+                "Carousel.change": (fb) => {
+                    // 切换时强制唤醒当前视频
+                    setTimeout(() => {
+                        const v = fb.getSlide().$el.querySelector('video');
+                        if (v) { v.muted = true; v.play(); }
+                    }, 50);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
