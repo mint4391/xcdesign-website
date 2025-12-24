@@ -5,86 +5,135 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>个人视觉设计 | 周晓城</title>
     <link rel="icon" href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/favicon.png">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+
     <style>
-        :root { --bg: #20252c; --accent: #007aff; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: #fff; font-family: system-ui, sans-serif; }
-        
+        :root { --bg: #20252c; --card: #2a3039; --accent: #007aff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow-x: hidden; }
+
         .container { width: 100%; max-width: 1200px; margin: 20px auto; padding: 0 15px; display: flex; flex-direction: column; gap: 20px; }
-        .media-item { display: block; width: 100%; background: #2a3039; border-radius: 8px; overflow: hidden; cursor: zoom-in; }
-        .media-item img, .media-item video { display: block; width: 100%; height: auto; border-radius: 8px; }
+        .media-item { display: block; width: 100%; background: var(--card); border-radius: 8px; overflow: hidden; cursor: zoom-in; text-decoration: none; }
+        .media-item img, .media-item video { display: block; width: 100%; height: auto; border: none; }
 
-        /* 修复序号显示 */
-        .fancybox__infobar { font-size: 16px; font-weight: bold; visibility: visible !important; }
+        /* UI 修复：确保左上角序号清晰 */
+        .fancybox__infobar { visibility: visible !important; opacity: 1 !important; font-weight: bold; font-size: 16px; }
         
-        /* 缩略图优化：防止裁剪，完整显示 */
-        .f-thumbs__slide__button { padding: 0; }
-        .f-thumbs__slide__img { object-fit: contain !important; background: #000; }
-        .f-thumbs__slide.is-nav-selected { box-shadow: inset 0 0 0 3px var(--accent) !important; opacity: 1 !important; }
+        /* 缩略图优化 */
+        .f-thumbs__slide__img { object-fit: contain !important; }
+        .f-thumbs__slide.is-nav-selected { box-shadow: inset 0 0 0 3px var(--accent) !important; }
 
-        /* 视频全屏感：屏蔽所有控件与 Edge 辅助工具 */
-        .f-v-wrapper { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000; }
+        /* 视频容器与屏蔽遮罩 */
+        .v-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000; }
         .v-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: transparent; }
-        video::-webkit-media-controls { display: none !important; }
         
+        /* 屏蔽原生视频控件干扰 */
+        video::-webkit-media-controls { display: none !important; }
+        .fancybox__content { background: #000 !important; }
+
         footer { padding: 40px 0; text-align: center; color: #555; font-size: 12px; }
-        @media (max-width: 768px) { .container { gap: 10px; padding: 0 10px; } .media-item { border-radius: 4px; } }
+        @media (max-width: 768px) { .container { gap: 10px; padding: 0 10px; } }
     </style>
 </head>
 <body>
+
     <main class="container" id="gallery-root"></main>
     <footer><p>©周晓城 · All Rights Reserved</p></footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
     <script>
         const cos = "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
         const root = document.getElementById('gallery-root');
-        
-        // 自动生成 43 个资源
-        const assets = [];
-        for(let i=1; i<=43; i++) {
-            // 视频 ID: 18, 21, 23, 31, 35, 40, 42
-            const vIds = [18, 21, 23, 31, 35, 40, 42];
-            const isV = vIds.includes(i);
-            assets.push({ id: i, type: isV ? 1 : 0, poster: isV ? (i-1) : i });
-        }
+        const videoIds = [18, 21, 23, 31, 35, 40, 42];
 
-        assets.forEach(item => {
+        // 1. 动态生成资源节点
+        for (let i = 1; i <= 43; i++) {
+            const isV = videoIds.includes(i);
             const a = document.createElement('a');
             a.className = 'media-item';
             a.dataset.fancybox = 'gallery';
-            if (item.type === 0) {
-                a.href = `${cos}${item.id}.png`;
-                a.innerHTML = `<img src="${cos}${item.id}.png" loading="lazy">`;
+            
+            if (!isV) {
+                // 图片处理
+                a.href = `${cos}${i}.png`;
+                a.innerHTML = `<img src="${cos}${i}.png" loading="lazy">`;
             } else {
-                a.href = `${cos}${item.id}.mp4`;
-                a.dataset.type = "html"; // 强行使用 HTML 模式避开内容探测
-                a.dataset.thumb = `${cos}${item.poster}.png`;
-                a.dataset.content = `
-                    <div class="f-v-wrapper">
+                // 视频处理：改用 inline 模板，彻底解决显示“地址链接”的问题
+                a.dataset.type = "html";
+                a.dataset.src = `#vid-${i}`; // 关联下方的隐藏视频模板
+                a.dataset.thumb = `${cos}${i-1}.png`;
+                
+                // 构建隐藏的视频模板 (包含物理遮罩层)
+                const template = document.createElement('div');
+                template.id = `vid-${i}`;
+                template.style.display = 'none';
+                template.innerHTML = `
+                    <div class="v-container">
                         <div class="v-mask"></div>
-                        <video src="${cos}${item.id}.mp4" autoplay muted loop playsinline disablePictureInPicture controlslist="nodownload nofullscreen noremoteplayback" style="width:100%;max-height:100vh;"></video>
+                        <video src="${cos}${i}.mp4" loop muted playsinline 
+                               disablePictureInPicture 
+                               controlslist="nodownload nofullscreen noremoteplayback"
+                               style="width:100%; max-height:100vh; object-fit:contain;">
+                        </video>
                     </div>`;
-                a.innerHTML = `<video src="${cos}${item.id}.mp4" autoplay loop muted playsinline poster="${cos}${item.poster}.png"></video>`;
+                document.body.appendChild(template);
+
+                // 列表页封面
+                a.innerHTML = `<video src="${cos}${i}.mp4" autoplay loop muted playsinline poster="${cos}${i-1}.png"></video>`;
             }
             root.appendChild(a);
-        });
+        }
 
+        // 2. 强力播放控制逻辑
+        const forcePlay = (slide) => {
+            // 使用可选链 ?. 防止 querySelector 报错导致 JS 崩溃
+            const v = slide?.$el?.querySelector('video');
+            if (v) {
+                v.muted = true;
+                v.play().catch(() => {
+                    // 处理浏览器自动播放拦截
+                    v.muted = true;
+                    v.play();
+                });
+            }
+        };
+
+        // 3. 初始化 Fancybox
         Fancybox.bind("[data-fancybox='gallery']", {
+            // 配置 Toolbar 按钮
+            Toolbar: {
+                display: {
+                    left: ["infobar"],
+                    right: ["thumbs", "fullscreen", "close"]
+                }
+            },
+            
+            Thumbs: { 
+                autoStart: true, 
+                type: "classic" 
+            },
+
             l10n: { COUNT: "{current} / {total}" },
-            Thumbs: { autoStart: true, type: "classic" }, // classic 模式缩略图更完整
-            Toolbar: { display: { left: ["infobar"], right: ["thumbs", "fullscreen", "close"] } },
+
             on: {
-                "Carousel.change": (fb) => {
-                    // 切换时强制唤醒当前视频
+                // 当内容渲染完成并挂载到 DOM 后再执行，解决 querySelector 报错
+                "Content.done": (fancybox, slide) => {
+                    forcePlay(slide);
+                },
+                // 切换幻灯片时的处理
+                "Carousel.change": (fancybox) => {
+                    // 给 100ms 缓冲，确保 slide 切换状态稳定
                     setTimeout(() => {
-                        const v = fb.getSlide().$el.querySelector('video');
-                        if (v) { v.muted = true; v.play(); }
-                    }, 50);
+                        forcePlay(fancybox.getSlide());
+                    }, 100);
                 }
             }
         });
+
+        // 部署后可取消注释：禁用右键屏蔽地址
+        // document.oncontextmenu = () => false;
     </script>
 </body>
 </html>
