@@ -60,40 +60,25 @@
                 a.href = `${cos}${i}.png`;
                 a.innerHTML = `<img src="${cos}${i}.png" loading="lazy">`;
             } else {
-                // 视频处理：改用 inline 模板，彻底解决显示“地址链接”的问题
-                a.dataset.type = "html";
-                a.dataset.src = `#vid-${i}`; // 关联下方的隐藏视频模板
-                a.dataset.thumb = `${cos}${i-1}.png`;
-                
-                // 构建隐藏的视频模板 (包含物理遮罩层)
-                const template = document.createElement('div');
-                template.id = `vid-${i}`;
-                template.style.display = 'none';
-                template.innerHTML = `
-                    <div class="v-container">
-                        <div class="v-mask"></div>
-                        <video src="${cos}${i}.mp4" loop muted playsinline 
-                               disablePictureInPicture 
-                               controlslist="nodownload nofullscreen noremoteplayback"
-                               style="width:100%; max-height:100vh; object-fit:contain;">
-                        </video>
-                    </div>`;
-                document.body.appendChild(template);
+                // 视频处理：直接使用视频 URL + type="video"，Fancybox 会自动创建 <video> 播放器
+                a.href = `${cos}${i}.mp4`;
+                a.dataset.type = "video";
 
-                // 列表页封面
+                // 可选：指定缩略图（使用上一张图片作为封面）
+                a.dataset.thumb = `${cos}${i-1}.png`;
+
+                // 列表页封面（视频缩略图，带 poster 防止闪黑）
                 a.innerHTML = `<video src="${cos}${i}.mp4" autoplay loop muted playsinline poster="${cos}${i-1}.png"></video>`;
             }
             root.appendChild(a);
         }
 
-        // 2. 强力播放控制逻辑
+        // 2. 强力播放控制逻辑（针对直接 video 类型）
         const forcePlay = (slide) => {
-            // 使用可选链 ?. 防止 querySelector 报错导致 JS 崩溃
-            const v = slide?.$el?.querySelector('video');
+            const v = slide.$content?.querySelector('video') || slide.$el?.querySelector('video');
             if (v) {
                 v.muted = true;
                 v.play().catch(() => {
-                    // 处理浏览器自动播放拦截
                     v.muted = true;
                     v.play();
                 });
@@ -102,7 +87,6 @@
 
         // 3. 初始化 Fancybox
         Fancybox.bind("[data-fancybox='gallery']", {
-            // 配置 Toolbar 按钮
             Toolbar: {
                 display: {
                     left: ["infobar"],
@@ -117,14 +101,22 @@
 
             l10n: { COUNT: "{current} / {total}" },
 
+            // 确保视频自动播放、循环、静音等属性
+            Html: {
+                video: {
+                    tpl: '<video class="fancybox__video" controls controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture autoplay loop muted playsinline style="width:100%; max-height:100vh; object-fit:contain;"></video>',
+                    autoplay: true,
+                    muted: true
+                }
+            },
+
             on: {
-                // 当内容渲染完成并挂载到 DOM 后再执行，解决 querySelector 报错
-                "Content.done": (fancybox, slide) => {
+                // 内容加载完成后强制播放
+                "done": (fancybox, slide) => {
                     forcePlay(slide);
                 },
-                // 切换幻灯片时的处理
+                // 切换幻灯片时
                 "Carousel.change": (fancybox) => {
-                    // 给 100ms 缓冲，确保 slide 切换状态稳定
                     setTimeout(() => {
                         forcePlay(fancybox.getSlide());
                     }, 100);
@@ -132,7 +124,7 @@
             }
         });
 
-        // 部署后可取消注释：禁用右键屏蔽地址
+        // 部署后可取消注释：禁用右键（可选）
         // document.oncontextmenu = () => false;
     </script>
 </body>
