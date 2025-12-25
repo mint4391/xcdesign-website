@@ -183,7 +183,6 @@
       box-shadow: none !important;
     }
 
-
     /* 针对关闭按钮，确保覆盖 */
     .fancybox__button.fancybox__button--close {
       border-radius: 50% !important;
@@ -317,12 +316,33 @@
     },
 
     on: {
+      // 优化视频播放逻辑，解决移动端自动播放限制问题
       done: (_, slide) => {
-        slide.$content?.querySelector("video")?.play().catch(() => {});
+        const video = slide.$content?.querySelector("video");
+        if (video) {
+          // 尝试播放，并捕获错误（通常是移动端的播放限制）
+          video.play().catch(error => {
+            // 如果自动播放失败，则尝试静音播放（通常是移动端允许的）
+            if (error.name === "NotAllowedError" || error.name === "AbortError") {
+              video.muted = true;
+              video.play().catch(() => {
+                // 最终失败，可能需要用户交互
+              });
+            }
+          });
+        }
       },
       "Carousel.change": (fancybox) => {
-        const v = fancybox.getSlide()?.$content?.querySelector("video");
-        v && setTimeout(() => v.play().catch(() => {}), 80);
+        const video = fancybox.getSlide()?.$content?.querySelector("video");
+        if (video) {
+          // 尝试播放，并捕获错误
+          video.play().catch(error => {
+            if (error.name === "NotAllowedError" || error.name === "AbortError") {
+              video.muted = true;
+              video.play().catch(() => {});
+            }
+          });
+        }
       }
     }
   });
