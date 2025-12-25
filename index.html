@@ -1,131 +1,421 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>个人视觉设计 | 周晓城</title>
-    <link rel="icon" href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/favicon.png">
-    
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+  />
+  <title>个人视觉设计 | 周晓城</title>
 
-    <style>
-        :root { --bg: #20252c; --card: #2a3039; --accent: #007aff; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: #fff; font-family: -apple-system, sans-serif; overflow-x: hidden; }
+  <link
+    rel="icon"
+    href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/favicon.png"
+  />
 
-        .container { width: 100%; max-width: 1200px; margin: 20px auto; padding: 0 15px; display: flex; flex-direction: column; gap: 20px; }
-        .media-item { display: block; width: 100%; background: var(--card); border-radius: 8px; overflow: hidden; cursor: zoom-in; text-decoration: none; }
-        .media-item img, .media-item video { display: block; width: 100%; height: auto; border: none; }
+  <!-- Fancybox -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"
+  />
 
-        /* UI 修复：确保左上角序号清晰 */
-        .fancybox__infobar { visibility: visible !important; opacity: 1 !important; font-weight: bold; font-size: 16px; }
-        
-        /* 缩略图优化 */
-        .f-thumbs__slide__img { object-fit: contain !important; }
-        .f-thumbs__slide.is-nav-selected { box-shadow: inset 0 0 0 3px var(--accent) !important; }
 
-        /* 视频容器与屏蔽遮罩 */
-        .v-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000; }
-        .v-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: transparent; }
-        
-        /* 屏蔽原生视频控件干扰 */
-        video::-webkit-media-controls { display: none !important; }
-        .fancybox__content { background: #000 !important; }
+  <style>
+    :root {
+      --bg: #20252c;
+      --card: #2a3039;
+      --accent: #007aff;
+    }
 
-        footer { padding: 40px 0; text-align: center; color: #555; font-size: 12px; }
-        @media (max-width: 768px) { .container { gap: 10px; padding: 0 10px; } }
-    </style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* ======================
+       首页平铺布局
+    ====================== */
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .media-item {
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: zoom-in;
+      transition: transform 0.35s ease;
+    }
+
+    /* Hover 微放大 */
+    .media-item:hover {
+      transform: scale(1.015);
+      box-shadow: #000813ae 0 4px 15px;
+      transition: transform 0.25s ease;
+    }
+
+    .media-item img,
+    .media-item video {
+      width: 100%;
+      display: block;
+    }
+
+    /* 首页视频：像 GIF 一样，不可交互 */
+    .media-item video {
+      pointer-events: none;
+    }
+
+    /* ======================
+       Fancybox 样式
+    ====================== */
+
+    .fancybox__content {
+      background: transparent !important;
+    }
+
+    /* 1. 控件渐隐效果：当内容被缩放或拖动时，工具栏、信息栏和缩略图渐隐 */
+    .fancybox__toolbar,
+    .fancybox__infobar,
+    .fancybox__thumbs {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .fancybox__container.is-scaling .fancybox__toolbar,
+    .fancybox__container.is-scaling .fancybox__infobar,
+    .fancybox__container.is-scaling .fancybox__thumbs,
+    .fancybox__container.is-dragging .fancybox__toolbar,
+    .fancybox__container.is-dragging .fancybox__infobar,
+    .fancybox__container.is-dragging .fancybox__thumbs {
+      opacity: 0;
+      pointer-events: none; /* 阻止在渐隐状态下被点击 */
+    }
+
+    /* 2. 缩略图样式优化 */
+
+    /* 缩略图容器 */
+    .f-thumbs__slide {
+      /* 默认未选中态的宽度为选中态的 60% */
+      width: 60px !important; /* 假设选中态宽度为 100px，则未选中为 60px */
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    /* 缩略图图片 */
+    .f-thumbs__slide__img {
+      object-fit: cover !important; /* 默认使用 cover，以实现遮罩效果 */
+      transition: all 0.3s ease;
+    }
+
+    /* 未选中态：25% 黑色遮罩 */
+    .f-thumbs__slide:not(.is-nav-selected)::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      transition: background-color 0.3s ease;
+      z-index: 1;
+    }
+
+    /* 悬浮态：黑色遮罩为 0，宽度不变 */
+    .f-thumbs__slide:not(.is-nav-selected):hover::before {
+      background-color: rgba(0, 0, 0, 0);
+    }
+
+    /* 选中态：白色边框，图片自适应在盒子内（object-fit: contain） */
+    .f-thumbs__slide.is-nav-selected {
+      width: 100px !important; /* 恢复为默认宽度（假设为 100px） */
+      border: 3px solid white; /* 白色边框 */
+      box-shadow: none !important; /* 移除旧的 box-shadow */
+    }
+
+    .f-thumbs__slide.is-nav-selected .f-thumbs__slide__img {
+      object-fit: contain !important; /* 图片自适应 */
+    }
+
+    /* 调整 Fancybox 默认的缩略图列表宽度，以适应缩略图宽度的变化 */
+    .fancybox__thumbs {
+      --f-thumb-width: 100px; /* 设定选中态的宽度 */
+      --f-thumb-height: 60px; /* 设定高度 */
+    }
+
+    /* ======================
+       Fancybox 按钮样式优化：圆形按钮
+    ====================== */
+
+    /* ======================
+       Fancybox 按钮样式优化：圆形按钮 (最终修正版)
+    ====================== */
+
+    /* 针对所有按钮容器，使用 !important 确保覆盖默认样式 */
+    .fancybox__button {
+      /* 强制变为圆形 */
+      border-radius: 50% !important; 
+      /* 强制设置尺寸和内边距 */
+      width: 44px !important;
+      height: 44px !important;
+      padding: 0 !important;
+      /* 确保内容居中 */
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      /* 确保背景和颜色 */
+      background: rgba(34, 34, 34, 0.8) !important;
+      color: #fff !important;
+      /* 移除可能影响形状的阴影 */
+      box-shadow: none !important;
+    }
+
+    /* 针对关闭按钮，确保覆盖 */
+    .fancybox__button.fancybox__button--close {
+      border-radius: 50% !important;
+    }
+
+    /* 针对悬浮和焦点状态，确保圆形不被破坏 */
+    .fancybox__button:hover,
+    .fancybox__button:focus {
+      border-radius: 50% !important;
+      background: rgba(34, 34, 34, 1) !important; /* 悬浮时颜色稍深 */
+    }
+
+    /* GIF-like Video */
+    .v-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      max-height: 80vh;
+    }
+
+    .v-container video {
+      max-height: 80vh;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      background: #000;
+    }
+
+    /* 彻底移除原生视频控件 & PiP */
+    video::-webkit-media-controls,
+    video::-webkit-media-controls-panel,
+    video::-webkit-media-controls-overlay-play-button {
+      display: none !important;
+    }
+
+    video {
+      outline: none;
+    }
+
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
 
-    <main class="container" id="gallery-root"></main>
-    <footer><p>©周晓城 · All Rights Reserved</p></footer>
+<main class="container" id="gallery-root"></main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+<footer>© 周晓城 · All Rights Reserved</footer>
 
-    <script>
-        const cos = "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
-        const root = document.getElementById('gallery-root');
-        const videoIds = [18, 21, 23, 31, 35, 40, 42];
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 
-        // 1. 动态生成资源节点
-        for (let i = 1; i <= 43; i++) {
-            const isV = videoIds.includes(i);
-            const a = document.createElement('a');
-            a.className = 'media-item';
-            a.dataset.fancybox = 'gallery';
-            
-            if (!isV) {
-                // 图片处理
-                a.href = `${cos}${i}.png`;
-                a.innerHTML = `<img src="${cos}${i}.png" loading="lazy">`;
-            } else {
-                // 视频处理：直接使用视频 URL + type="video"，Fancybox 会自动创建 <video> 播放器
-                a.href = `${cos}${i}.mp4`;
-                a.dataset.type = "video";
+<script>
+  const cos =
+    "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
+  const root = document.getElementById("gallery-root");
 
-                // 可选：指定缩略图（使用上一张图片作为封面）
-                a.dataset.thumb = `${cos}${i-1}.png`;
+  const videoIds = [18, 21, 23, 31, 35, 40, 42];
 
-                // 列表页封面（视频缩略图，带 poster 防止闪黑）
-                a.innerHTML = `<video src="${cos}${i}.mp4" autoplay loop muted playsinline poster="${cos}${i-1}.png"></video>`;
-            }
-            root.appendChild(a);
+  for (let i = 1; i <= 43; i++) {
+    const isVideo = videoIds.includes(i);
+    const a = document.createElement("a");
+    a.className = "media-item";
+    a.dataset.fancybox = "gallery";
+
+    if (!isVideo) {
+      a.href = `${cos}${i}.png`;
+      a.innerHTML = `<img src="${cos}${i}.png" loading="lazy">`;
+    } else {
+      a.dataset.type = "html";
+      a.dataset.thumb = `${cos}${i - 1}.png`;
+      a.dataset.src = `
+        <div class="v-container">
+          <video
+            src="${cos}${i}.mp4"
+            autoplay
+            loop
+            muted
+            playsinline
+            disablepictureinpicture
+            controlslist="nodownload nofullscreen noremoteplayback"
+          ></video>
+        </div>
+      `;
+
+      a.innerHTML = `
+        <video
+          src="${cos}${i}.mp4"
+          autoplay
+          loop
+          muted
+          playsinline
+          disablepictureinpicture
+          poster="${cos}${i - 1}.png"
+        ></video>
+      `;
+    }
+
+    root.appendChild(a);
+  }
+
+  Fancybox.bind("[data-fancybox='gallery']", {
+    backdropColor: "auto",
+
+    // 性能优化配置
+    Image: {
+      // 启用浏览器原生图片解码，减少主线程阻塞
+      // 兼容性：Chrome 85+, Safari 14.1+
+      decode: true,
+      // 启用图片懒加载
+      lazy: true,
+    },
+
+    Toolbar: {
+      display: {
+        left: ["infobar"],
+        right: ["thumbs", "fullscreen", "close"]
+      }
+    },
+
+    Thumbs: {
+      autoStart: true
+    },
+
+    l10n: {
+      COUNT: "{current} / {total}"
+    },
+
+    on: {
+      done: (_, slide) => {
+        slide.$content?.querySelector("video")?.play().catch(() => {});
+      },
+      "Carousel.change": (fancybox) => {
+        const v = fancybox.getSlide()?.$content?.querySelector("video");
+        v && setTimeout(() => v.play().catch(() => {}), 80);
+      }
+    }
+  });
+
+  // ======================
+  // 安全屏蔽：右键/控制台/控制台网络
+  // ======================
+
+  // 1. 屏蔽右键菜单 (contextmenu)
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+  });
+
+  // 2. 屏蔽控制台 (F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.)
+  // 这种方法只能阻止通过键盘快捷键打开，但仍然是必要的防御措施
+  document.onkeydown = function(e) {
+    // F12
+    if (e.keyCode == 123) {
+      return false;
+    }
+    // Ctrl+Shift+I (或 Cmd+Option+I)
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 73) {
+      return false;
+    }
+    // Ctrl+Shift+J (或 Cmd+Option+J)
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 74) {
+      return false;
+    }
+    // Ctrl+U (查看源代码)
+    if (e.ctrlKey && e.keyCode == 85) {
+      return false;
+    }
+  };
+
+  // 3. 持续检测控制台状态并干扰 (解决提前打开控制台失效的问题)
+  (function() {
+    function check() {
+      // 检查控制台是否打开
+      function doCheck() {
+        if (window.outerWidth - window.innerWidth > 100 || window.outerHeight - window.innerHeight > 100) {
+          // 窗口大小变化，可能是控制台打开
+          return true;
         }
+        // 尝试使用 Date.now() 计时法，控制台打开时性能差异明显
+        const startTime = Date.now();
+        debugger;
+        const endTime = Date.now();
+        // 如果控制台打开，debugger 会暂停，endTime - startTime 会非常小
+        // 如果控制台关闭，endTime - startTime 会有一个正常的时间差
+        // 这是一个粗略的判断，但结合其他方法更有效
+        if (endTime - startTime < 5) {
+          return false; // 误判，控制台可能未打开
+        }
+        return false;
+      }
 
-        // 2. 强力播放控制逻辑（针对直接 video 类型）
-        const forcePlay = (slide) => {
-            const v = slide.$content?.querySelector('video') || slide.$el?.querySelector('video');
-            if (v) {
-                v.muted = true;
-                v.play().catch(() => {
-                    v.muted = true;
-                    v.play();
-                });
-            }
-        };
+      // 核心干扰逻辑：不断触发 debugger
+      (function runCheck() {
+        if (doCheck()) {
+          // 如果检测到控制台打开，则不断触发 debugger
+          (function() {
+            debugger;
+          })();
+        }
+        // 持续检查，每 500 毫秒检查一次
+        setTimeout(runCheck, 500);
+      })();
+    }
 
-        // 3. 初始化 Fancybox
-        Fancybox.bind("[data-fancybox='gallery']", {
-            Toolbar: {
-                display: {
-                    left: ["infobar"],
-                    right: ["thumbs", "fullscreen", "close"]
-                }
-            },
-            
-            Thumbs: { 
-                autoStart: true, 
-                type: "classic" 
-            },
+    // 另一种更简单粗暴的 debugger 循环，在控制台打开时会陷入无限断点
+    // 这种方法在某些浏览器中可能导致性能问题，但效果最直接
+    const devtools = /./;
+    devtools.toString = function() {
+      this.opened = true;
+      // 发现控制台打开后，可以执行干扰操作，例如重定向或清空页面
+      // document.body.innerHTML = '<h1>Console Detected!</h1>';
+      // window.location.href = 'about:blank';
+      // 这里我们选择最温和的干扰：持续 debugger
+      (function loop() {
+        debugger;
+        setTimeout(loop, 100);
+      })();
+    };
 
-            l10n: { COUNT: "{current} / {total}" },
+    // 触发 toString 方法，如果控制台打开，则 devtools.opened 会被设置为 true
+    // 这种方法在 Chrome/Edge 中非常有效
+    console.log('%c', devtools);
 
-            // 确保视频自动播放、循环、静音等属性
-            Html: {
-                video: {
-                    tpl: '<video class="fancybox__video" controls controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture autoplay loop muted playsinline style="width:100%; max-height:100vh; object-fit:contain;"></video>',
-                    autoplay: true,
-                    muted: true
-                }
-            },
+    // 启动窗口大小检测（作为辅助）
+    // check(); 
+    
+  })();
 
-            on: {
-                // 内容加载完成后强制播放
-                "done": (fancybox, slide) => {
-                    forcePlay(slide);
-                },
-                // 切换幻灯片时
-                "Carousel.change": (fancybox) => {
-                    setTimeout(() => {
-                        forcePlay(fancybox.getSlide());
-                    }, 100);
-                }
-            }
-        });
+</script>
 
-        // 部署后可取消注释：禁用右键（可选）
-        // document.oncontextmenu = () => false;
-    </script>
 </body>
 </html>
