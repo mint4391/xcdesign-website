@@ -183,6 +183,11 @@
       box-shadow: none !important;
     }
 
+    /* 针对工具栏中的按钮，确保覆盖所有状态 */
+    .fancybox__toolbar .fancybox__button {
+      /* 继承上面的样式，无需额外设置 */
+    }
+
     /* 针对关闭按钮，确保覆盖 */
     .fancybox__button.fancybox__button--close {
       border-radius: 50% !important;
@@ -316,33 +321,12 @@
     },
 
     on: {
-      // 优化视频播放逻辑，解决移动端自动播放限制问题
       done: (_, slide) => {
-        const video = slide.$content?.querySelector("video");
-        if (video) {
-          // 尝试播放，并捕获错误（通常是移动端的播放限制）
-          video.play().catch(error => {
-            // 如果自动播放失败，则尝试静音播放（通常是移动端允许的）
-            if (error.name === "NotAllowedError" || error.name === "AbortError") {
-              video.muted = true;
-              video.play().catch(() => {
-                // 最终失败，可能需要用户交互
-              });
-            }
-          });
-        }
+        slide.$content?.querySelector("video")?.play().catch(() => {});
       },
       "Carousel.change": (fancybox) => {
-        const video = fancybox.getSlide()?.$content?.querySelector("video");
-        if (video) {
-          // 尝试播放，并捕获错误
-          video.play().catch(error => {
-            if (error.name === "NotAllowedError" || error.name === "AbortError") {
-              video.muted = true;
-              video.play().catch(() => {});
-            }
-          });
-        }
+        const v = fancybox.getSlide()?.$content?.querySelector("video");
+        v && setTimeout(() => v.play().catch(() => {}), 80);
       }
     }
   });
@@ -377,68 +361,62 @@
     }
   };
 
-  // 3. 持续检测控制台状态并干扰 (隐蔽检测 + console.clear 干扰)
+  // 3. 持续检测控制台状态并干扰 (解决提前打开控制台失效的问题)
   (function() {
-    let devtoolsOpen = false;
-
-    // 核心干扰逻辑：清空本地缓存并关闭页面
-    // 注意：此函数不应在循环中调用，只在检测到控制台打开时调用一次
-    function aggressiveInterference() {
-      // 1. 清空本地缓存 (LocalStorage 和 SessionStorage)
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch (e) {
-        // 捕获可能因安全策略导致的错误
+    function check() {
+      // 检查控制台是否打开
+      function doCheck() {
+        if (window.outerWidth - window.innerWidth > 100 || window.outerHeight - window.innerHeight > 100) {
+          // 窗口大小变化，可能是控制台打开
+          return true;
+        }
+        // 尝试使用 Date.now() 计时法，控制台打开时性能差异明显
+        const startTime = Date.now();
+        debugger;
+        const endTime = Date.now();
+        // 如果控制台打开，debugger 会暂停，endTime - startTime 会非常小
+        // 如果控制台关闭，endTime - startTime 会有一个正常的时间差
+        // 这是一个粗略的判断，但结合其他方法更有效
+        if (endTime - startTime < 5) {
+          return false; // 误判，控制台可能未打开
+        }
+        return false;
       }
 
-      // 2. 尝试关闭当前页面
-      window.close();
-
-      // 3. 作为 window.close() 无效时的备用方案：重定向到空白页
-      window.location.href = 'about:blank';
+      // 核心干扰逻辑：不断触发 debugger
+      (function runCheck() {
+        if (doCheck()) {
+          // 如果检测到控制台打开，则不断触发 debugger
+          (function() {
+            debugger;
+          })();
+        }
+        // 持续检查，每 500 毫秒检查一次
+        setTimeout(runCheck, 500);
+      })();
     }
 
-    // 基于 toString 的隐蔽检测 (在 Chrome/Edge 中非常有效)
+    // 另一种更简单粗暴的 debugger 循环，在控制台打开时会陷入无限断点
+    // 这种方法在某些浏览器中可能导致性能问题，但效果最直接
     const devtools = /./;
     devtools.toString = function() {
-      // 仅设置状态，不立即执行干扰
-      devtoolsOpen = true;
+      this.opened = true;
+      // 发现控制台打开后，可以执行干扰操作，例如重定向或清空页面
+      // document.body.innerHTML = '<h1>Console Detected!</h1>';
+      // window.location.href = 'about:blank';
+      // 这里我们选择最温和的干扰：持续 debugger
+      (function loop() {
+        debugger;
+        setTimeout(loop, 100);
+      })();
     };
 
-    // 触发 toString 方法，如果控制台打开，则 devtools.toString 会被调用
+    // 触发 toString 方法，如果控制台打开，则 devtools.opened 会被设置为 true
+    // 这种方法在 Chrome/Edge 中非常有效
     console.log('%c', devtools);
 
-    // 辅助检测：基于窗口尺寸变化 (作为补充，但效果不如 toString)
-    // 这种方法可以检测到控制台被停靠在窗口内的情况
-    const threshold = 160; // 经验值，控制台打开时 innerWidth 会显著减小
-    const checkSize = function() {
-      if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
-        // 检测到控制台打开
-        devtoolsOpen = true;
-      } else {
-        // 检测到控制台关闭
-        devtoolsOpen = false;
-      }
-    };
-
-    // 监听窗口大小变化
-    window.addEventListener('resize', checkSize);
-    // 首次加载时检查
-    checkSize();
-
-    // 持续检查循环：用于确保在 toString 或 checkSize 首次触发后，干扰逻辑能被执行
-    let hasInterfered = false;
-    (function checkLoop() {
-      if (devtoolsOpen && !hasInterfered) {
-        // 如果检测到控制台打开，且尚未干扰过
-        hasInterfered = true;
-        aggressiveInterference();
-      } else {
-        // 否则，继续检查
-        setTimeout(checkLoop, 500);
-      }
-    })();
+    // 启动窗口大小检测（作为辅助）
+    // check(); 
     
   })();
 
