@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+  />
+  <title>个人视觉设计 | 周晓城</title>
+
+  <link
+    rel="icon"
+    href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/favicon.png"
+  />
+
+  <!-- Fancybox CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"
+  />
+
+  <style>
+    
+    :root {
+      --bg: #20252c;
+      --card: #2a3039;
+      --accent: #007aff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* 容器布局 */
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .media-item {
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: zoom-in;
+      transition: transform 0.35s ease;
+      -webkit-mask-image: -webkit-radial-gradient(white, black); /* 修复圆角 */
+      position: relative;
+    }
+
+    /* Hover 微放大 (PC端视觉反馈保留，但播放逻辑改为滚动) */
+    @media (hover: hover) {
+      .media-item:hover {
+        transform: scale(1.015);
+        box-shadow: #000813ae 0 4px 15px;
+        transition: transform 0.25s ease;
+      }
+    }
+
+    .media-item img,
+    .media-item video {
+      width: 100%;
+      display: block;
+    }
+
+    /* 列表页视频：禁止鼠标/触摸交互，让点击穿透给 Fancybox */
+    .media-item video {
+      pointer-events: none;
+    }
+
+    /* Fancybox 样式覆盖 */
+    .fancybox__content {
+      background: transparent !important;
+    }
+
+    /* 隐藏工具栏渐隐动画 */
+    .fancybox__toolbar,
+    .fancybox__infobar,
+    .fancybox__thumbs {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .fancybox__container.is-scaling .fancybox__toolbar,
+    .fancybox__container.is-scaling .fancybox__infobar,
+    .fancybox__container.is-scaling .fancybox__thumbs,
+    .fancybox__container.is-dragging .fancybox__toolbar,
+    .fancybox__container.is-dragging .fancybox__infobar,
+    .fancybox__container.is-dragging .fancybox__thumbs {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* 缩略图样式 */
+    .f-thumbs__slide {
+      width: 60px !important;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .f-thumbs__slide__img {
+      object-fit: cover !important;
+      transition: all 0.3s ease;
+    }
+
+    .f-thumbs__slide:not(.is-nav-selected)::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      transition: background-color 0.3s ease;
+      z-index: 1;
+    }
+
+    .f-thumbs__slide:not(.is-nav-selected):hover::before {
+      background-color: rgba(0, 0, 0, 0);
+    }
+
+    .f-thumbs__slide.is-nav-selected {
+      width: 100px !important;
+      border: 3px solid white;
+      box-shadow: none !important;
+    }
+
+    .f-thumbs__slide.is-nav-selected .f-thumbs__slide__img {
+      object-fit: cover !important;
+    }
+
+    .fancybox__thumbs {
+      --f-thumb-width: 100px;
+      --f-thumb-height: 60px;
+    }
+
+    /* 圆形按钮 */
+    .fancybox__button {
+      border-radius: 50% !important; 
+      width: 44px !important;
+      height: 44px !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: rgba(34, 34, 34, 0.8) !important;
+      color: #fff !important;
+      box-shadow: none !important;
+    }
+
+    .fancybox__button:hover,
+    .fancybox__button:focus {
+      background: rgba(34, 34, 34, 1) !important;
+    }
+
+    /* Fancybox 视频容器 */
+    .v-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      max-height: 80vh;
+      width: 100%;
+    }
+
+    .v-container video {
+      max-height: 80vh;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      background: #000;
+    }
+
+    /* 隐藏原生控件 */
+    video::-webkit-media-controls { display: none !important; }
+
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<main class="container" id="gallery-root"></main>
+
+<footer>© 周晓城 · All Rights Reserved</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+<script>
+  const cos = "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
+  const root = document.getElementById("gallery-root");
+  const videoIds = [18, 21, 23, 31, 35, 40, 42];
+
+
+  for (let i = 1; i <= 43; i++) {
+    const isVideo = videoIds.includes(i);
+    const a = document.createElement("a");
+    a.className = "media-item";
+    a.dataset.fancybox = "gallery";
+
+    if (!isVideo) {
+      // --- 图片 ---
+      a.href = `${cos}${i}.png`;
+      a.innerHTML = `<img src="${cos}${i}.png" loading="lazy" alt="Works">`;
+    } else {
+      // --- 视频 ---
+      
+      // A. Fancybox 弹窗内容 (点开后看的内容)
+      a.dataset.type = "html";
+      a.dataset.thumb = `${cos}${i - 1}.png`; // 缩略图
+      // 这里必须加 autoplay，因为用户已经点进来了
+      a.dataset.src = `
+        <div class="v-container">
+          <video
+            src="${cos}${i}.mp4"
+            autoplay loop muted playsinline
+            disablepictureinpicture
+            controlslist="nodownload nofullscreen noremoteplayback"
+          ></video>
+        </div>
+      `;
+
+      // B. 列表页内容 (没点开时的预览)
+      a.classList.add('video-wrapper');
+      a.innerHTML = `
+        <video
+          src="${cos}${i}.mp4"
+          poster="${cos}${i - 1}.png"
+          loop muted playsinline
+          disablepictureinpicture
+          preload="metadata"
+        ></video>
+      `;
+    }
+    root.appendChild(a);
+  }
+
+  // ===============================================
+  // 2. 统一播放逻辑：Observer 滚动监听 (PC & Mobile 通用)
+  // ===============================================
+  
+  // 配置观察器：threshold 0.5 表示视频露出 50% 时触发
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.2 
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      // 获取当前卡片下的 video 元素
+      const video = entry.target.querySelector('video');
+      if (!video) return;
+
+      if (entry.isIntersecting) {
+        // --- 进入视口：播放 ---
+        video.muted = true; // 必须静音才能自动播放
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            // 忽略由快速滚动导致的打断错误
+            // console.log("Auto-play interrupted");
+          });
+        }
+      } else {
+        // --- 离开视口：暂停 ---
+        video.pause();
+      }
+    });
+  }, observerOptions);
+
+  // 启动监听
+  const videoWrappers = document.querySelectorAll('.video-wrapper');
+  videoWrappers.forEach(wrapper => {
+    observer.observe(wrapper);
+  });
+
+
+  // ===============================================
+  // 3. Fancybox 初始化
+  // ===============================================
+  Fancybox.bind("[data-fancybox='gallery']", {
+    // 基础配置
+    backdropColor: "auto",
+    Image: { decode: true, lazy: true },
+    Images: { zoom: false }, // 禁止双击放大视频
+    Toolbar: {
+      display: {
+        left: ["infobar"],
+        right: ["thumbs", "fullscreen", "close"]
+      }
+    },
+    Thumbs: { autoStart: true },
+    l10n: { COUNT: "{current} / {total}" },
+
+    // 弹窗视频播放控制
+    on: {
+      "Carousel.ready": (fancybox) => {
+        // 弹窗打开准备好时，确保视频播放
+        const slide = fancybox.getSlide();
+        const video = slide?.$content?.querySelector('video');
+        if (video) {
+          video.removeAttribute('controls'); 
+          video.muted = true;
+          video.play().catch(e => {});
+        }
+      },
+      "Carousel.change": (fancybox) => {
+        // 切换图片/视频时
+        const slide = fancybox.getSlide();
+        const video = slide?.$content?.querySelector('video');
+        if (video) {
+          // 稍微延迟一点点，等待DOM渲染
+          setTimeout(() => {
+            video.muted = true;
+            video.play().catch(e => {});
+          }, 50);
+        }
+      }
+    }
+  });
+
+  // ======================
+  // 4. 基础保护
+  // ======================
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+  });
+
+  // 1. 屏蔽右键菜单 (contextmenu)
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+  });
+
+  // 2. 屏蔽控制台 (F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.)
+  // 这种方法只能阻止通过键盘快捷键打开，但仍然是必要的防御措施
+  document.onkeydown = function(e) {
+    // F12
+    if (e.keyCode == 123) {
+      return false;
+    }
+    // Ctrl+Shift+I (或 Cmd+Option+I)
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 73) {
+      return false;
+    }
+    // Ctrl+Shift+J (或 Cmd+Option+J)
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 74) {
+      return false;
+    }
+    // Ctrl+U (查看源代码)
+    if (e.ctrlKey && e.keyCode == 85) {
+      return false;
+    }
+  };
+
+
+</script>
+
+</body>
+</html>
