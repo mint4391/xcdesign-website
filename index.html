@@ -40,7 +40,6 @@
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* 容器布局 */
     .container {
       max-width: 1200px;
       margin: 20px auto;
@@ -56,7 +55,7 @@
       overflow: hidden;
       cursor: zoom-in;
       transition: transform 0.35s ease;
-      -webkit-mask-image: -webkit-radial-gradient(white, black); /* 修复圆角 */
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
       position: relative;
     }
 
@@ -80,12 +79,10 @@
       pointer-events: none;
     }
 
-    /* Fancybox 样式覆盖 */
     .fancybox__content {
       background: transparent !important;
     }
 
-    /* 隐藏工具栏渐隐动画 */
     .fancybox__toolbar,
     .fancybox__infobar,
     .fancybox__thumbs {
@@ -102,7 +99,6 @@
       pointer-events: none;
     }
 
-    /* 缩略图样式 */
     .f-thumbs__slide {
       width: 60px !important;
       border-radius: 8px;
@@ -148,7 +144,6 @@
       --f-thumb-height: 60px;
     }
 
-    /* 圆形按钮 */
     .fancybox__button {
       border-radius: 50% !important; 
       width: 44px !important;
@@ -167,7 +162,6 @@
       background: rgba(34, 34, 34, 1) !important;
     }
 
-    /* Fancybox 视频容器 */
     .v-container {
       display: flex;
       justify-content: center;
@@ -185,7 +179,6 @@
       background: #000;
     }
 
-    /* 隐藏原生控件 */
     video::-webkit-media-controls { display: none !important; }
 
     footer {
@@ -210,7 +203,7 @@
   const videoIds = [18, 21, 23, 31, 35, 40, 42];
 
   // ===============================================
-  // 1. 生成 DOM (关键：列表视频不写 autoplay，全屏视频写 autoplay)
+  // 1. 生成 DOM
   // ===============================================
   for (let i = 1; i <= 43; i++) {
     const isVideo = videoIds.includes(i);
@@ -221,11 +214,12 @@
     if (!isVideo) {
       // --- 图片 ---
       a.href = `${cos}${i}.png`;
-      a.innerHTML = `<img src="${cos}${i}.png" loading="lazy" alt="Works">`;
+      a.innerHTML = `<img src="${cos}${i}.png" loading="lazy" alt="work">`;
     } else {
-      // --- 视频 ---
+      // --- 视频配置 ---
       
-      // A. Fancybox 弹窗内容 (点开后看的内容)
+      // Fancybox 内的 HTML
+      // 注意：保留 autoplay，但主要依靠 JS 触发
       a.dataset.type = "html";
       a.dataset.thumb = `${cos}${i - 1}.png`; // 缩略图
       // 这里必须加 autoplay，因为用户已经点进来了
@@ -240,9 +234,7 @@
         </div>
       `;
 
-      // B. 列表页内容 (没点开时的预览)
-      // 注意：这里去掉了 autoplay，交给下面的 IntersectionObserver 控制
-      // 加上 'video-wrapper' 类名方便 JS 查找
+      // 列表页的 HTML
       a.classList.add('video-wrapper');
       a.innerHTML = `
         <video
@@ -258,54 +250,12 @@
   }
 
   // ===============================================
-  // 2. 统一播放逻辑：Observer 滚动监听 (PC & Mobile 通用)
-  // ===============================================
-  
-  // 配置观察器：threshold 0.5 表示视频露出 50% 时触发
-  const observerOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.5 
-  };
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      // 获取当前卡片下的 video 元素
-      const video = entry.target.querySelector('video');
-      if (!video) return;
-
-      if (entry.isIntersecting) {
-        // --- 进入视口：播放 ---
-        video.muted = true; // 必须静音才能自动播放
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            // 忽略由快速滚动导致的打断错误
-            // console.log("Auto-play interrupted");
-          });
-        }
-      } else {
-        // --- 离开视口：暂停 ---
-        video.pause();
-      }
-    });
-  }, observerOptions);
-
-  // 启动监听
-  const videoWrappers = document.querySelectorAll('.video-wrapper');
-  videoWrappers.forEach(wrapper => {
-    observer.observe(wrapper);
-  });
-
-
-  // ===============================================
-  // 3. Fancybox 初始化
+  // 2. Fancybox 配置 (核心修复在 on 事件)
   // ===============================================
   Fancybox.bind("[data-fancybox='gallery']", {
-    // 基础配置
     backdropColor: "auto",
     Image: { decode: true, lazy: true },
-    Images: { zoom: false }, // 禁止双击放大视频
+    Images: { zoom: false },
     Toolbar: {
       display: {
         left: ["infobar"],
@@ -315,7 +265,7 @@
     Thumbs: { autoStart: true },
     l10n: { COUNT: "{current} / {total}" },
 
-    // 弹窗视频播放控制
+    // === 核心修复区域 ===
     on: {
       "Carousel.ready": (fancybox) => {
         // 弹窗打开准备好时，确保视频播放
@@ -327,6 +277,7 @@
           video.play().catch(e => {});
         }
       },
+      // 2. 切换动作开始时触发 (让前一个视频暂停，节省资源)
       "Carousel.change": (fancybox) => {
         // 切换图片/视频时
         const slide = fancybox.getSlide();
@@ -342,19 +293,70 @@
     }
   });
 
+  // 封装一个强力播放函数
+  function playVideoInSlide(slide) {
+    if (!slide || !slide.$content) return;
+    const video = slide.$content.querySelector('video');
+    if (video) {
+      // 移动端/iOS 关键：必须再次强制设置 muted 和 playsInline
+      video.muted = true;
+      video.playsInline = true;
+      video.removeAttribute('controls');
+      
+      // 如果视频暂停了，尝试播放
+      if (video.paused) {
+        // 使用 Promise 处理，防止报错
+        const p = video.play();
+        if (p !== undefined) {
+          p.catch(e => {
+            // console.warn("Auto-play blocked", e);
+          });
+        }
+      }
+    }
+  }
+
+  // ===============================================
+  // 3. 列表页滚动播放逻辑 (保持不变)
+  // ===============================================
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.5 
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const video = entry.target.querySelector('video');
+      if (!video) return;
+
+      if (entry.isIntersecting) {
+        video.muted = true;
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }, observerOptions);
+
+  const videoWrappers = document.querySelectorAll('.video-wrapper');
+  videoWrappers.forEach(wrapper => {
+    observer.observe(wrapper);
+  });
+
   // ======================
-  // 4. 基础保护
+  // 1. 基础保护
   // ======================
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
 
-  // 1. 屏蔽右键菜单 (contextmenu)
+  // 2. 屏蔽右键菜单 (contextmenu)
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
 
-  // 2. 屏蔽控制台 (F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.)
+  // 3. 屏蔽控制台 (F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.)
   // 这种方法只能阻止通过键盘快捷键打开，但仍然是必要的防御措施
   document.onkeydown = function(e) {
     // F12
@@ -374,7 +376,6 @@
       return false;
     }
   };
-
 
 </script>
 
