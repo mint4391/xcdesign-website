@@ -13,11 +13,12 @@
     href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/favicon.png"
   />
 
-  <!-- Fancybox CSS -->
+  <!-- Fancybox -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"
   />
+
 
   <style>
     
@@ -31,7 +32,8 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+      /* 移动端点击去高亮 */
+      -webkit-tap-highlight-color: transparent; 
     }
 
     body {
@@ -40,6 +42,7 @@
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
+    /* 首页平铺布局 */
     .container {
       max-width: 1200px;
       margin: 20px auto;
@@ -55,17 +58,14 @@
       overflow: hidden;
       cursor: zoom-in;
       transition: transform 0.35s ease;
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
-      position: relative;
+      position: relative; /* 确保遮罩层定位正确 */
     }
 
-    /* Hover 微放大 (PC端视觉反馈保留，但播放逻辑改为滚动) */
-    @media (hover: hover) {
-      .media-item:hover {
-        transform: scale(1.015);
-        box-shadow: #000813ae 0 4px 15px;
-        transition: transform 0.25s ease;
-      }
+    /* Hover 微放大 */
+    .media-item:hover {
+      transform: scale(1.015);
+      box-shadow: #000813ae 0 4px 15px;
+      transition: transform 0.25s ease;
     }
 
     .media-item img,
@@ -74,15 +74,30 @@
       display: block;
     }
 
-    /* 列表页视频：禁止鼠标/触摸交互，让点击穿透给 Fancybox */
+    /* 首页视频：像 GIF 一样，不可交互 */
     .media-item video {
       pointer-events: none;
     }
+
+    /* 关键：透明遮罩，防止安卓点击穿透问题 */
+    .click-mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      background: transparent;
+      cursor: zoom-in;
+    }
+
+    /*  3. Fancybox 样式 (保留你的原始设置) */
 
     .fancybox__content {
       background: transparent !important;
     }
 
+    /* 控件渐隐效果 */
     .fancybox__toolbar,
     .fancybox__infobar,
     .fancybox__thumbs {
@@ -99,51 +114,64 @@
       pointer-events: none;
     }
 
+    /* 缩略图样式优化 */
     .f-thumbs__slide {
+      box-sizing: border-box !important;
       width: 60px !important;
       border-radius: 8px;
       overflow: hidden;
       transition: all 0.3s ease;
       position: relative;
+      
+      /* 默认没有边框和内边距 */
+      border: 0 solid transparent; 
+      padding: 0;
     }
 
     .f-thumbs__slide__img {
-      object-fit: cover !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      object-fit: cover !important; 
+      border-radius: 0;
       transition: all 0.3s ease;
     }
 
+    /* 添加黑色遮罩 */
     .f-thumbs__slide:not(.is-nav-selected)::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       background-color: rgba(0, 0, 0, 0.25);
       pointer-events: none;
       transition: background-color 0.3s ease;
       z-index: 1;
     }
 
+    /* 悬浮时去除遮罩 */
     .f-thumbs__slide:not(.is-nav-selected):hover::before {
-      background-color: rgba(0, 0, 0, 0);
+      background-color: transparent;
     }
 
+    /* 选中态样式 */
     .f-thumbs__slide.is-nav-selected {
-      width: 100px !important;
-      border: 3px solid white;
-      box-shadow: none !important;
+      width: 100px !important; /* 选中变宽 */
+      border: 2px solid #fff !important; /* 1. 设置白色边框 */
+      padding: 4px!important; /* 2. 核心：使用 padding 实现 4px 间距 */
+      background: transparent;/* 确保背景透明，间距处显示的是底层颜色 */
     }
 
+     /* 选中态下的图片处理 */
     .f-thumbs__slide.is-nav-selected .f-thumbs__slide__img {
-      object-fit: contain !important;
+      border-radius: 4px; 
     }
 
     .fancybox__thumbs {
-      --f-thumb-width: 100px;
+      --f-thumb-width: 100%;
       --f-thumb-height: 60px;
     }
 
+    /* 按钮样式优化：圆形按钮 */
     .fancybox__button {
       border-radius: 50% !important; 
       width: 44px !important;
@@ -157,11 +185,17 @@
       box-shadow: none !important;
     }
 
+    .fancybox__button.fancybox__button--close {
+      border-radius: 50% !important;
+    }
+
     .fancybox__button:hover,
     .fancybox__button:focus {
+      border-radius: 50% !important;
       background: rgba(34, 34, 34, 1) !important;
     }
 
+    /* GIF-like Video */
     .v-container {
       display: flex;
       justify-content: center;
@@ -179,7 +213,20 @@
       background: #000;
     }
 
-    video::-webkit-media-controls { display: none !important; }
+    .is-compact .fancybox__thumbs {
+      --f-thumb-width: 100% important;
+    }
+
+    /* 彻底移除原生视频控件 & PiP */
+    video::-webkit-media-controls,
+    video::-webkit-media-controls-panel,
+    video::-webkit-media-controls-overlay-play-button {
+      display: none !important;
+    }
+
+    video {
+      outline: none;
+    }
 
     footer {
       padding: 40px 0;
@@ -198,12 +245,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 
 <script>
-  const cos = "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
+  const cos =
+    "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
   const root = document.getElementById("gallery-root");
+
   const videoIds = [18, 21, 23, 31, 35, 40, 42];
 
   // ===============================================
-  // 1. 生成 DOM
+  // 1. 生成 DOM (兼容性修复：添加透明遮罩)
   // ===============================================
   for (let i = 1; i <= 43; i++) {
     const isVideo = videoIds.includes(i);
@@ -212,17 +261,14 @@
     a.dataset.fancybox = "gallery";
 
     if (!isVideo) {
-      // --- 图片 ---
       a.href = `${cos}${i}.png`;
-      a.innerHTML = `<img src="${cos}${i}.png" loading="lazy" alt="work">`;
+      a.innerHTML = `<img src="${cos}${i}.png" loading="lazy">`;
     } else {
-      // --- 视频配置 ---
+      // --- 视频处理 ---
       
-      // Fancybox 内的 HTML
-      // 注意：保留 autoplay，但主要依靠 JS 触发
+      // Fancybox 内容 (保留 autoplay)
       a.dataset.type = "html";
-      a.dataset.thumb = `${cos}${i - 1}.png`; // 缩略图
-      // 这里必须加 autoplay，因为用户已经点进来了
+      a.dataset.thumb = `${cos}${i - 1}.png`;
       a.dataset.src = `
         <div class="v-container">
           <video
@@ -234,28 +280,60 @@
         </div>
       `;
 
-      // 列表页的 HTML
-      a.classList.add('video-wrapper');
+      // 列表预览内容
+      // 关键修改 1: 添加 click-mask 用于解决小米/安卓点击穿透问题
+      // 关键修改 2: 移除 hardcoded autoplay，交给 Observer 控制，避免手机卡顿
       a.innerHTML = `
+        <div class="click-mask"></div>
         <video
           src="${cos}${i}.mp4"
-          poster="${cos}${i - 1}.png"
           loop muted playsinline
           disablepictureinpicture
+          poster="${cos}${i - 1}.png"
           preload="metadata"
         ></video>
       `;
+      // 标记类名，方便 JS 查找
+      a.classList.add('video-wrapper');
     }
+
     root.appendChild(a);
   }
 
   // ===============================================
-  // 2. Fancybox 配置 (核心修复在 on 事件)
+  // 2. 视频强力播放函数 (修复 Edge/Chrome 首次不播放)
+  // ===============================================
+  function forcePlay(video) {
+    if (!video) return;
+    video.muted = true;
+    video.playsInline = true; // iOS 关键
+    
+    const attempt = () => {
+      // 如果已经在播放，可以停止尝试
+      if (!video.paused && video.currentTime > 0) return; 
+      video.play().catch(e => { /* 忽略未加载完成的报错 */ });
+    };
+
+    attempt();
+    // 轮询重试：解决浏览器加载延迟导致的播放失败
+    let count = 0;
+    const interval = setInterval(() => {
+      count++;
+      if (count > 20 || (!video.paused && video.currentTime > 0)) {
+        clearInterval(interval);
+      } else {
+        attempt();
+      }
+    }, 50); // 每50ms尝试一次，持续1秒
+  }
+
+  // ===============================================
+  // 3. Fancybox 配置 (修复安卓层级遮挡 + 自动播放)
   // ===============================================
   Fancybox.bind("[data-fancybox='gallery']", {
     backdropColor: "auto",
     Image: { decode: true, lazy: true },
-    Images: { zoom: false },
+    Images: { zoom: false }, // 禁止视频上的双击缩放
     Toolbar: {
       display: {
         left: ["infobar"],
@@ -265,70 +343,59 @@
     Thumbs: { autoStart: true },
     l10n: { COUNT: "{current} / {total}" },
 
-    // === 核心修复区域 ===
     on: {
+      // 打开弹窗准备就绪
       "Carousel.ready": (fancybox) => {
-        // 弹窗打开准备好时，确保视频播放
         const slide = fancybox.getSlide();
-        const video = slide?.$content?.querySelector('video');
-        if (video) {
-          video.removeAttribute('controls'); 
-          video.muted = true;
-          video.play().catch(e => {});
+        const video = slide?.$content?.querySelector("video");
+        
+        // 1. 触发播放
+        forcePlay(video);
+
+        // 2. 修复安卓/小米视频层级遮挡
+        // 获取触发弹窗的那个列表元素
+        const trigger = slide.triggerEl;
+        if (trigger && trigger.classList.contains('video-wrapper')) {
+           const listVideo = trigger.querySelector('video');
+           if (listVideo) {
+             // 强制隐藏列表中的原视频，防止它浮在弹窗上面
+             listVideo.style.visibility = 'hidden';
+           }
         }
       },
-      // 2. 切换动作开始时触发 (让前一个视频暂停，节省资源)
+      
+      // 切换视频
       "Carousel.change": (fancybox) => {
-        // 切换图片/视频时
-        const slide = fancybox.getSlide();
-        const video = slide?.$content?.querySelector('video');
-        if (video) {
-          // 稍微延迟一点点，等待DOM渲染
-          setTimeout(() => {
-            video.muted = true;
-            video.play().catch(e => {});
-          }, 50);
-        }
+        const video = fancybox.getSlide()?.$content?.querySelector("video");
+        forcePlay(video);
+      },
+
+      // 切换动画结束 (移动端最稳妥的播放时机)
+      "Carousel.settle": (fancybox) => {
+        const video = fancybox.getSlide()?.$content?.querySelector("video");
+        forcePlay(video);
+      },
+
+      // 关闭弹窗
+      "close": () => {
+        // 3. 恢复列表视频显示
+        document.querySelectorAll('.video-wrapper video').forEach(v => {
+          v.style.visibility = 'visible';
+        });
       }
     }
   });
 
-  // 封装一个强力播放函数
-  function playVideoInSlide(slide) {
-    if (!slide || !slide.$content) return;
-    const video = slide.$content.querySelector('video');
-    if (video) {
-      // 移动端/iOS 关键：必须再次强制设置 muted 和 playsInline
-      video.muted = true;
-      video.playsInline = true;
-      video.removeAttribute('controls');
-      
-      // 如果视频暂停了，尝试播放
-      if (video.paused) {
-        // 使用 Promise 处理，防止报错
-        const p = video.play();
-        if (p !== undefined) {
-          p.catch(e => {
-            // console.warn("Auto-play blocked", e);
-          });
-        }
-      }
-    }
-  }
-
   // ===============================================
-  // 3. 列表页滚动播放逻辑 (保持不变)
+  // 4. 列表页滚动播放 (PC/Mobile 通用)
   // ===============================================
-  const observerOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.5 
-  };
-
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const video = entry.target.querySelector('video');
       if (!video) return;
+
+      // 如果视频被 Fancybox 隐藏了，就不要播放
+      if (video.style.visibility === 'hidden') return;
 
       if (entry.isIntersecting) {
         video.muted = true;
@@ -337,45 +404,17 @@
         video.pause();
       }
     });
-  }, observerOptions);
+  }, { threshold: 0.5 }); // 露出50%播放
 
   const videoWrappers = document.querySelectorAll('.video-wrapper');
-  videoWrappers.forEach(wrapper => {
-    observer.observe(wrapper);
-  });
+  videoWrappers.forEach(wrapper => observer.observe(wrapper));
 
   // ======================
-  // 1. 基础保护
+  // 5. 基础保护
   // ======================
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
-
-  // 2. 屏蔽右键菜单 (contextmenu)
-  document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-  });
-
-  // 3. 屏蔽控制台 (F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.)
-  // 这种方法只能阻止通过键盘快捷键打开，但仍然是必要的防御措施
-  document.onkeydown = function(e) {
-    // F12
-    if (e.keyCode == 123) {
-      return false;
-    }
-    // Ctrl+Shift+I (或 Cmd+Option+I)
-    if (e.ctrlKey && e.shiftKey && e.keyCode == 73) {
-      return false;
-    }
-    // Ctrl+Shift+J (或 Cmd+Option+J)
-    if (e.ctrlKey && e.shiftKey && e.keyCode == 74) {
-      return false;
-    }
-    // Ctrl+U (查看源代码)
-    if (e.ctrlKey && e.keyCode == 85) {
-      return false;
-    }
-  };
 
 </script>
 
