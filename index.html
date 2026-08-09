@@ -31,6 +31,7 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -57,6 +58,7 @@
       overflow: hidden;
       cursor: zoom-in;
       transition: transform 0.35s ease;
+      position: relative;
     }
 
     /* Hover 微放大 */
@@ -106,11 +108,18 @@
       overflow: hidden;
       transition: all 0.3s ease;
       position: relative;
+      box-sizing: border-box !important;
+      border: 0 solid transparent;
+      padding: 0;
     }
 
     /* 缩略图图片 */
     .f-thumbs__slide__img {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
       object-fit: cover !important; /* 默认使用 cover，以实现遮罩效果 */
+      border-radius: 0;
       transition: all 0.3s ease;
     }
 
@@ -135,19 +144,26 @@
 
     /* 选中态：白色边框，图片保持比例并缩放填满 */
     .f-thumbs__slide.is-nav-selected {
-      width: 100px !important; /* 恢复为默认宽度（假设为 100px） */
-      border: 3px solid white; /* 白色边框 */
+      width: 100px !important;
+      border: 2px solid #fff !important;
+      padding: 4px;
+      background: transparent;
       box-shadow: none !important; /* 移除旧的 box-shadow */
     }
 
     .f-thumbs__slide.is-nav-selected .f-thumbs__slide__img {
       object-fit: cover !important;
+      border-radius: 4px;
     }
 
     /* 调整 Fancybox 默认的缩略图列表宽度，以适应缩略图宽度的变化 */
     .fancybox__thumbs {
-      --f-thumb-width: 100px; /* 设定选中态的宽度 */
+      --f-thumb-width: 100%;
       --f-thumb-height: 60px; /* 设定高度 */
+    }
+
+    .f-thumbs__slide__button {
+      width: 100%;
     }
 
     /* ======================
