@@ -225,6 +225,7 @@
   const cos =
     "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
   const root = document.getElementById("gallery-root");
+  let galleryClosing = false;
 
   const gifIds = new Set([25, 26, 37, 48, 49]);
 
@@ -256,7 +257,16 @@
     },
 
     Thumbs: {
-      autoStart: true
+      autoStart: false
+    },
+
+    on: {
+      closing: () => {
+        galleryClosing = true;
+      },
+      destroy: () => {
+        galleryClosing = false;
+      }
     },
 
     l10n: {
@@ -272,6 +282,14 @@
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
+
+  // 关闭过程尚未销毁实例时，阻止新的画廊实例重入
+  document.addEventListener('click', function(e) {
+    if (galleryClosing && e.target.closest("[data-fancybox='gallery']")) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
 
   // 2. 屏蔽控制台 (F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.)
   // 这种方法只能阻止通过键盘快捷键打开，但仍然是必要的防御措施
