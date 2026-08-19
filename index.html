@@ -242,14 +242,10 @@
 
   Fancybox.bind("[data-fancybox='gallery']", {
     backdropColor: "auto",
+    animated: false,
 
-    // 性能优化配置
     Image: {
-      // 启用浏览器原生图片解码，减少主线程阻塞
-      // 兼容性：Chrome 85+, Safari 14.1+
-      decode: true,
-      // 启用图片懒加载
-      lazy: true,
+      lazy: false,
     },
 
     Toolbar: {
