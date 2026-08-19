@@ -193,11 +193,6 @@
       box-shadow: none !important;
     }
 
-    /* 针对工具栏中的按钮，确保覆盖所有状态 */
-    .fancybox__toolbar .fancybox__button {
-      /* 继承上面的样式，无需额外设置 */
-    }
-
     /* 针对关闭按钮，确保覆盖 */
     .fancybox__button.fancybox__button--close {
       border-radius: 50% !important;
@@ -302,65 +297,6 @@
       return false;
     }
   };
-
-  // 3. 持续检测控制台状态并干扰 (解决提前打开控制台失效的问题)
-  (function() {
-    function check() {
-      // 检查控制台是否打开
-      function doCheck() {
-        if (window.outerWidth - window.innerWidth > 100 || window.outerHeight - window.innerHeight > 100) {
-          // 窗口大小变化，可能是控制台打开
-          return true;
-        }
-        // 尝试使用 Date.now() 计时法，控制台打开时性能差异明显
-        const startTime = Date.now();
-        debugger;
-        const endTime = Date.now();
-        // 如果控制台打开，debugger 会暂停，endTime - startTime 会非常小
-        // 如果控制台关闭，endTime - startTime 会有一个正常的时间差
-        // 这是一个粗略的判断，但结合其他方法更有效
-        if (endTime - startTime < 5) {
-          return false; // 误判，控制台可能未打开
-        }
-        return false;
-      }
-
-      // 核心干扰逻辑：不断触发 debugger
-      (function runCheck() {
-        if (doCheck()) {
-          // 如果检测到控制台打开，则不断触发 debugger
-          (function() {
-            debugger;
-          })();
-        }
-        // 持续检查，每 500 毫秒检查一次
-        setTimeout(runCheck, 500);
-      })();
-    }
-
-    // 另一种更简单粗暴的 debugger 循环，在控制台打开时会陷入无限断点
-    // 这种方法在某些浏览器中可能导致性能问题，但效果最直接
-    const devtools = /./;
-    devtools.toString = function() {
-      this.opened = true;
-      // 发现控制台打开后，可以执行干扰操作，例如重定向或清空页面
-      // document.body.innerHTML = '<h1>Console Detected!</h1>';
-      // window.location.href = 'about:blank';
-      // 这里我们选择最温和的干扰：持续 debugger
-      (function loop() {
-        debugger;
-        setTimeout(loop, 100);
-      })();
-    };
-
-    // 触发 toString 方法，如果控制台打开，则 devtools.opened 会被设置为 true
-    // 这种方法在 Chrome/Edge 中非常有效
-    console.log('%c', devtools);
-
-    // 启动窗口大小检测（作为辅助）
-    // check(); 
-    
-  })();
 
 </script>
 
