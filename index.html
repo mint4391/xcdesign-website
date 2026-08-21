@@ -373,7 +373,7 @@
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
-
+*/
   // 关闭画廊过程中的防重入处理
   document.addEventListener('click', function(e) {
     if (galleryClosing && e.target.closest("[data-fancybox='gallery']")) {
@@ -382,6 +382,7 @@
     }
   }, true);
 
+  /*
   // 屏蔽开发者工具常用快捷键
   document.onkeydown = function(e) {
     if (e.keyCode == 123) return false; // F12
@@ -389,6 +390,7 @@
     if (e.ctrlKey && e.shiftKey && e.keyCode == 74) return false; // Ctrl+Shift+J
     if (e.ctrlKey && e.keyCode == 85) return false; // Ctrl+U
   };
+  */
 
 </script>
 
