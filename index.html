@@ -1,387 +1,275 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
-  />
-  <title>个人设计作品集 | 周晓城</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>个人设计作品集 | 周晓城</title>
+    <link rel="icon" href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/favicon.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+    <style>
+        :root {
+            --bg: #20252c;
+            --card: #2a3039;
+            --accent: #007aff;
+            --placeholder: #3a414d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .media-item {
+            background: var(--placeholder); border-radius: 8px; overflow: hidden; cursor: zoom-in;
+            position: relative; contain: content; content-visibility: auto; contain-intrinsic-size: auto 300px;
+            outline: none !important; /* 彻底移除 ESC 退出后的键盘焦点边框 */
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .media-item:focus, .media-item:focus-visible, .media-item * :focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        .media-item:hover { transform: scale(1.015); box-shadow: #000813ae 0 4px 15px; transition: transform 0.25s ease, box-shadow 0.25s ease; }
 
-  <link
-    rel="icon"
-    href="https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/favicon.png"
-  />
+        /* 图片与视频硬件加速优化 */
+        .media-item img, .media-item video {
+            width: 100%; height: 100%; display: block; object-fit: cover; opacity: 0; transition: opacity 0.4s ease;
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 8px;
+            outline: none !important;
+        }
+        .media-item img.loaded, .media-item video.loaded { opacity: 1; }
 
-  <!-- Fancybox CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"
-  />
+        /* Fancybox 弹窗内视频硬件加速与自适应 */
+        .fancybox__content { 
+            background: transparent !important; 
+            border-radius: 8px !important;
+            overflow: hidden !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            outline: none !important;
+        }
+        
+        .fancybox__slide .fancybox__content img,
+        .fancybox__slide .fancybox__content video { 
+            will-change: transform, opacity; 
+            transform: translateZ(0) !important; 
+            -webkit-transform: translateZ(0) !important;
+            backface-visibility: hidden !important;
+            -webkit-backface-visibility: hidden !important;
+            border-radius: 8px !important; 
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important;
+            pointer-events: none;
+            outline: none !important;
+        }
 
-  <style>
-    :root {
-      --bg: #20252c;
-      --card: #2a3039;
-      --accent: #007aff;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      background: var(--bg);
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    /* ======================
-       首页平铺布局
-    ====================== */
-    .container {
-      max-width: 1200px;
-      margin: 20px auto;
-      padding: 0 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .media-item {
-      background: var(--card);
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: zoom-in;
-      transition: transform 0.35s ease, box-shadow 0.35s ease;
-      position: relative;
-      
-      contain: content;
-    }
-
-    /* Hover 微放大 */
-    .media-item:hover {
-      transform: scale(1.015);
-      box-shadow: #000813ae 0 4px 15px;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-    }
-
-    .media-item img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
-    }
-
-    /* ==========================================
-       Fancybox 及 Safari/移动端动图性能优化
-       ========================================== */
-
-    .fancybox__content {
-      background: transparent !important;
-    }
-
-    /* 控件渐隐效果 */
-    .fancybox__toolbar,
-    .fancybox__infobar,
-    .fancybox__thumbs {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-
-    .fancybox__container.is-scaling .fancybox__toolbar,
-    .fancybox__container.is-scaling .fancybox__infobar,
-    .fancybox__container.is-scaling .fancybox__thumbs,
-    .fancybox__container.is-dragging .fancybox__toolbar,
-    .fancybox__container.is-dragging .fancybox__infobar,
-    .fancybox__container.is-dragging .fancybox__thumbs {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* 缩略图样式优化 */
-    .f-thumbs__slide {
-      width: 60px !important;
-      border-radius: 8px;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      position: relative;
-      box-sizing: border-box !important;
-      border: 0 solid transparent;
-      padding: 0;
-    }
-
-    .f-thumbs__slide__img {
-      width: 100% !important;
-      height: 100% !important;
-      display: block;
-      object-fit: cover !important;
-      border-radius: 0;
-      transition: all 0.3s ease;
-    }
-
-    .f-thumbs__slide:not(.is-nav-selected)::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.25);
-      pointer-events: none;
-      transition: background-color 0.3s ease;
-      z-index: 1;
-    }
-
-    .f-thumbs__slide:not(.is-nav-selected):hover::before {
-      background-color: rgba(0, 0, 0, 0);
-    }
-
-    .f-thumbs__slide.is-nav-selected {
-      width: 100px !important;
-      border: 2px solid #fff !important;
-      padding: 4px;
-      background: transparent;
-      box-shadow: none !important;
-    }
-
-    .f-thumbs__slide.is-nav-selected .f-thumbs__slide__img {
-      object-fit: cover !important;
-      border-radius: 4px;
-    }
-
-    .fancybox__thumbs {
-      --f-thumb-width: 100%;
-      --f-thumb-height: 60px;
-    }
-
-    .f-thumbs__slide__button {
-      width: 100%;
-    }
-
-    /* 圆形控制按钮 */
-    .fancybox__button {
-      border-radius: 50% !important; 
-      width: 44px !important;
-      height: 44px !important;
-      padding: 0 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      background: rgba(34, 34, 34, 0.8) !important;
-      color: #fff !important;
-      box-shadow: none !important;
-    }
-
-    .fancybox__button.fancybox__button--close {
-      border-radius: 50% !important;
-    }
-
-    .fancybox__button:hover,
-    .fancybox__button:focus {
-      border-radius: 50% !important;
-      background: rgba(34, 34, 34, 1) !important;
-    }
-
-    /* 弹窗打开时，底层 GIF 会由 JavaScript 暂时卸载，避免双重解码。 */
-    body.is-fancybox-active .media-item:hover {
-      transform: none !important;
-      box-shadow: none !important;
-    }
-
-    footer {
-      padding: 40px 0;
-      text-align: center;
-      font-size: 12px;
-      color: #555;
-    }
-  </style>
+        .fancybox__toolbar, .fancybox__infobar, .fancybox__thumbs { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .fancybox__container.is-scaling .fancybox__toolbar,
+        .fancybox__container.is-scaling .fancybox__infobar,
+        .fancybox__container.is-scaling .fancybox__thumbs,
+        .fancybox__container.is-dragging .fancybox__toolbar,
+        .fancybox__container.is-dragging .fancybox__infobar,
+        .fancybox__container.is-dragging .fancybox__thumbs { opacity: 0; pointer-events: none; }
+        .f-thumbs__slide { width: 60px !important; border-radius: 8px; overflow: hidden; transition: all 0.3s ease; position: relative; box-sizing: border-box !important; border: 0 solid transparent; padding: 0; }
+        .f-thumbs__slide__img { width: 100% !important; height: 100% !important; display: block; object-fit: cover !important; border-radius: 0; transition: all 0.3s ease; }
+        .f-thumbs__slide:not(.is-nav-selected)::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.25); pointer-events: none; transition: background-color 0.3s ease; z-index: 1; }
+        .f-thumbs__slide:not(.is-nav-selected):hover::before { background-color: rgba(0,0,0,0); }
+        .f-thumbs__slide.is-nav-selected { width: 100px !important; border: 2px solid #fff !important; padding: 4px; background: transparent; box-shadow: none !important; }
+        .f-thumbs__slide.is-nav-selected .f-thumbs__slide__img { object-fit: cover !important; border-radius: 4px; }
+        .fancybox__thumbs { --f-thumb-width: 100%; --f-thumb-height: 60px; }
+        .f-thumbs__slide__button { width: 100%; }
+        .fancybox__button { border-radius: 50% !important; width: 44px !important; height: 44px !important; padding: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; background: rgba(34,34,34,0.8) !important; color: #fff !important; box-shadow: none !important; }
+        .fancybox__button.fancybox__button--close { border-radius: 50% !important; }
+        .fancybox__button:hover, .fancybox__button:focus { border-radius: 50% !important; background: rgba(34,34,34,1) !important; }
+        body.is-fancybox-active .media-item:hover { transform: none !important; box-shadow: none !important; }
+        footer { padding: 40px 0; text-align: center; font-size: 12px; color: #555; }
+    </style>
 </head>
 <body>
+    <main class="container" id="gallery-root"></main>
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+    <script>
+        const cos = "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
+        const root = document.getElementById("gallery-root");
+        let galleryClosing = false;
+        let galleryOpen = false;
 
-<main class="container" id="gallery-root"></main>
+        const gifIds = new Set([25, 26, 37, 48, 49]);
+        const specialRatios = {};
 
-<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+        // ==========================================
+        // 1. 视口监听器
+        // ==========================================
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                const el = entry.target;
+                const container = el.parentElement;
+                const realSrc = el.dataset.src;
 
-<script>
-  const cos = "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
-  const root = document.getElementById("gallery-root");
-  let galleryClosing = false;
-  let galleryOpen = false;
-  let restoreTimers = [];
-  const suspendedGifSources = new Map();
+                if (entry.isIntersecting) {
+                    if (galleryOpen) return;
 
-  // GIF 图片序号列表
-  const gifIds = new Set([25, 26, 37, 48, 49]);
+                    if (el.tagName === 'IMG' && !el.src) {
+                        const tempImg = new Image();
+                        tempImg.src = realSrc;
+                        tempImg.onload = async () => {
+                            el.src = realSrc;
+                            if (el.decode) {
+                                try { await el.decode(); } catch (e) {}
+                            }
+                            el.classList.add('loaded');
+                            if (el.naturalWidth && el.naturalHeight) {
+                                container.style.aspectRatio = `${el.naturalWidth} / ${el.naturalHeight}`;
+                            }
+                        };
+                        tempImg.onerror = () => {
+                            console.warn(`图片加载失败: ${realSrc}`);
+                            el.classList.add('loaded');
+                        };
+                    } else if (el.tagName === 'VIDEO' && !el.src) {
+                        el.src = realSrc;
+                        el.onloadeddata = () => {
+                            el.classList.add('loaded');
+                            if (el.videoWidth && el.videoHeight) {
+                                container.style.aspectRatio = `${el.videoWidth} / ${el.videoHeight}`;
+                            }
+                        };
+                    }
+                }
+            });
+        }, { rootMargin: '300px 0px' });
 
-  // 特例比例表
-  const specialRatios = {};
+        // ==========================================
+        // 2. 动态生成 DOM
+        // ==========================================
+        for (let i = 1; i <= 50; i++) {
+            const isGif = gifIds.has(i);
 
-  // ==========================================
-  // 1. 视口监听器：平滑分流加载（彻底防并发卡死）
-  // ==========================================
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry, index) => {
-      const img = entry.target;
-      const container = img.parentElement;
-      const realSrc = img.dataset.src;
+            const ext = isGif ? "webm" : "png";
+            const src = `${cos}${i}.${ext}`;
 
-      if (entry.isIntersecting) {
-        if (!img.src) {
-          // 微小错峰加载（index * 30ms），防止瞬间并发打满网络通道导致页面假死
-          setTimeout(() => {
-            // 弹窗期间，底层 GIF 会被刻意卸载，不能被观察器重新加载。
-            if (galleryOpen || img.src) return;
-            img.src = realSrc;
-            
-            img.onload = () => {
-              if (img.naturalWidth && img.naturalHeight) {
-                container.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
-              }
-            };
+            const a = document.createElement("a");
+            a.className = "media-item";
+            a.dataset.fancybox = "gallery";
+            a.href = src;
+            a.style.display = "block";
+            a.style.width = "100%";
+            a.style.aspectRatio = specialRatios[i] ? specialRatios[i] : "16 / 9";
 
-            // 失败保护，防止卡死
-            img.onerror = () => {
-              console.warn(`图片加载失败: ${realSrc}`);
-            };
-          }, index * 30);
+            if (isGif) {
+                a.dataset.type = "html";
+                // 重点：注入 controlsList 彻底禁用控件并移除默认 tabindex 焦距
+                a.dataset.src = `<video src="${src}" autoplay loop muted playsinline tabindex="-1" disablePictureInPicture controlsList="nodownload nofullscreen noremoteplayback" style="width:100%;height:100%;object-fit:contain;border-radius:8px;transform:translateZ(0);will-change:transform,opacity;"></video>`;
+
+                const video = document.createElement("video");
+                video.dataset.src = src;
+                video.dataset.isGif = "true";
+                video.autoplay = true;
+                video.loop = true;
+                video.muted = true;
+                video.playsInline = true;
+                video.tabIndex = -1;
+                video.setAttribute('disablePictureInPicture', '');
+                video.setAttribute('controlsList', 'nodownload nofullscreen noremoteplayback');
+
+                a.appendChild(video);
+                root.appendChild(a);
+                observer.observe(video);
+            } else {
+                const img = document.createElement("img");
+                img.dataset.src = src;
+                img.dataset.isGif = "false";
+                img.alt = `作品 ${i}`;
+
+                a.appendChild(img);
+                root.appendChild(a);
+                observer.observe(img);
+            }
+
+            if (isGif) {
+                const link = document.createElement("link");
+                link.rel = "preload";
+                link.as = "fetch";
+                link.href = src;
+                document.head.appendChild(link);
+            }
         }
-      }
-      // 不在此处卸载 src，利用本地原生缓存，避免向上/下滚动时反复拉取图片引发闪烁与卡顿
-    });
-  }, {
-    // 缩小预加载范围至 300px，仅处理即将出现的图片
-    rootMargin: '300px 0px' 
-  });
 
-  // ==========================================
-  // 2. 动态生成 DOM 节点
-  // ==========================================
-  for (let i = 1; i <= 50; i++) {
-    const extension = gifIds.has(i) ? "gif" : "png";
-    const src = `${cos}${i}.${extension}`;
-    
-    const a = document.createElement("a");
-    a.className = "media-item";
-    a.dataset.fancybox = "gallery";
-    a.href = src; 
-    
-    a.style.display = "block";
-    a.style.width = "100%";
-    a.style.aspectRatio = specialRatios[i] ? specialRatios[i] : "16 / 9";
+        // ==========================================
+        // 3. 暂停/恢复底层动图
+        // ==========================================
+        function suspendBackgroundGifs() {
+            root.querySelectorAll("video[data-is-gif='true']").forEach((video) => { 
+                video.pause();
+                video.style.visibility = "hidden"; 
+            });
+        }
+        function resumeBackgroundGifs() {
+            root.querySelectorAll("video[data-is-gif='true']").forEach((video) => { 
+                video.play().catch(() => {});
+                video.style.visibility = "visible"; 
+            });
+        }
 
-    const img = document.createElement("img");
-    img.dataset.src = src;
-    img.dataset.isGif = String(gifIds.has(i));
-    img.alt = `作品 ${i}`;
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.objectFit = "cover"; 
-    
-    a.appendChild(img);
-    root.appendChild(a);
+        // ==========================================
+        // 4. Fancybox 配置
+        // ==========================================
+        Fancybox.bind("[data-fancybox='gallery']", {
+            backdropColor: "auto",
+            showClass: "f-zoomInUp",
+            hideClass: "f-zoomOutDown",
+            preload: 0,
+            Image: {
+                lazy: true,
+                zoom: true,
+                Panzoom: { maxScale: 1, click: false, dblClick: false, wheel: false, pinchToZoom: false }
+            },
+            Toolbar: { display: { left: ["infobar"], right: ["fullscreen", "close"] } },
+            Thumbs: false,
+            on: {
+                init: () => { galleryOpen = true; suspendBackgroundGifs(); },
+                done: (fancybox) => { 
+                    document.body.classList.add("is-fancybox-active"); 
+                    const slide = fancybox.getSlide();
+                    if (slide && slide.$content) {
+                        const v = slide.$content.querySelector('video');
+                        if (v) { v.play().catch(() => {}); }
+                    }
+                },
+                closing: () => { 
+                    galleryClosing = true; 
+                    document.body.classList.remove("is-fancybox-active"); 
+                },
+                close: () => {
+                    // 清除键盘 ESC 退出后留在页面上的聚焦状态，彻底解决聚焦框和全屏按钮状态错乱
+                    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                        document.activeElement.blur();
+                    }
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            galleryClosing = false;
+                            galleryOpen = false;
+                            resumeBackgroundGifs();
+                        });
+                    });
+                },
+                destroy: () => {},
+                l10n: { COUNT: "{current} / {total}" }
+            }
+        });
 
-    observer.observe(img);
-  }
-
-  // 暂时移除底层列表中已加载的 GIF，避免它与弹窗内同一 GIF 同时解码、播放。
-  function suspendBackgroundGifs() {
-    restoreTimers.forEach(clearTimeout);
-    restoreTimers = [];
-
-    root.querySelectorAll("img[data-is-gif='true']").forEach((img) => {
-      const source = img.currentSrc || img.src;
-      if (!source) return;
-
-      suspendedGifSources.set(img, source);
-      img.removeAttribute("src");
-    });
-  }
-
-  // 等 Fancybox 的退场动画彻底结束后，再以错峰方式恢复底层 GIF。
-  function resumeBackgroundGifs() {
-    let delay = 0;
-    suspendedGifSources.forEach((source, img) => {
-      const timer = setTimeout(() => {
-        img.src = source;
-        suspendedGifSources.delete(img);
-      }, delay);
-      restoreTimers.push(timer);
-      delay += 120;
-    });
-  }
-
-  // ==========================================
-  // 3. Fancybox 配置（针对 iOS Safari & 安卓优化）
-  // ==========================================
-  Fancybox.bind("[data-fancybox='gallery']", {
-    backdropColor: "auto",
-    showClass: "f-fadeIn",
-    hideClass: "f-fadeOut",
-
-    preload: 0, 
-
-    Image: {
-      lazy: true,
-      // GIF 本身已很重；禁用从缩略图放大及平移缩放，只保留轻量淡入淡出。
-      zoom: false,
-      Panzoom: {
-        maxScale: 1,
-        click: false,
-        dblClick: false,
-        wheel: false,
-        pinchToZoom: false
-      }
-    },
-
-    Toolbar: {
-      display: {
-        left: ["infobar"],
-        right: ["fullscreen", "close"] 
-      }
-    },
-
-    Thumbs: false,
-
-    on: {
-      // 在 Fancybox 创建弹窗时立刻停止底层 GIF，避免出现双实例。
-      init: () => {
-        galleryOpen = true;
-        suspendBackgroundGifs();
-      },
-      // 打开完成后只保留弹窗中的 GIF 在播放。
-      done: () => {
-        document.body.classList.add("is-fancybox-active");
-      },
-      // 退场期间仍保持底层 GIF 卸载，避免关闭时出现解码尖峰。
-      closing: () => {
-        galleryClosing = true;
-        // 瞬间关掉底层平铺列表的微放大渲染，给退场动画腾出 100% GPU 资源
-        document.body.classList.remove("is-fancybox-active");
-      },
-      destroy: () => {
-        galleryClosing = false;
-        galleryOpen = false;
-        document.body.classList.remove("is-fancybox-active");
-        resumeBackgroundGifs();
-      }
-    },
-
-    l10n: {
-      COUNT: "{current} / {total}"
-    }
-  });
-
-  // 关闭画廊过程中的防重入处理
-  document.addEventListener('click', function(e) {
-    if (galleryClosing && e.target.closest("[data-fancybox='gallery']")) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    }
-  }, true);
-</script>
-
+        document.addEventListener('click', function (e) {
+            if (galleryClosing && e.target.closest("[data-fancybox='gallery']")) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
+        }, true);
+    </script>
 </body>
 </html>
