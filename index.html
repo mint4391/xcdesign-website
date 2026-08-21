@@ -57,20 +57,30 @@
       border-radius: 8px;
       overflow: hidden;
       cursor: zoom-in;
-      transition: transform 0.35s ease;
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
       position: relative;
+      
+      /* 强制将每个容器和图片分配到独立的 GPU 渲染层，防止重排 */
+      transform: translateZ(0);
+      will-change: transform, opacity;
+      contain: content;
     }
 
     /* Hover 微放大 */
     .media-item:hover {
-      transform: scale(1.015);
+      transform: scale(1.015) translateZ(0); /* 加上 translateZ 保持在 GPU 层 */
       box-shadow: #000813ae 0 4px 15px;
-      transition: transform 0.25s ease;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
 
     .media-item img {
       width: 100%;
+      height: 100%;
       display: block;
+      object-fit: cover;
+      /* 强制 GPU 加速并优化图片渲染 */
+      transform: translateZ(0);
+      will-change: transform;
     }
 
     /* ======================
@@ -79,6 +89,12 @@
 
     .fancybox__content {
       background: transparent !important;
+    }
+
+    /* 优化 Fancybox 内部全尺寸大图的渲染性能 */
+    .fancybox__image {
+      transform: translate3d(0, 0, 0) !important;
+      will-change: transform, opacity;
     }
 
     /* 1. 控件渐隐效果：当内容被缩放或拖动时，工具栏、信息栏和缩略图渐隐 */
@@ -166,13 +182,6 @@
       width: 100%;
     }
 
-    /* ======================
-       Fancybox 按钮样式优化：圆形按钮
-    ====================== */
-
-    /* ======================
-       Fancybox 按钮样式优化：圆形按钮 (最终修正版)
-    ====================== */
 
     /* 针对所有按钮容器，使用 !important 确保覆盖默认样式 */
     .fancybox__button {
@@ -205,6 +214,14 @@
       background: rgba(34, 34, 34, 1) !important; /* 悬浮时颜色稍深 */
     }
 
+    /* ==========================================
+       终极防闪动：画廊打开或关闭时，锁死底层卡片，禁止 Hover 干扰
+       ========================================== */
+    body.is-fancybox-active .media-item:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
     footer {
       padding: 40px 0;
       text-align: center;
@@ -222,50 +239,125 @@
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 
 <script>
-  const cos =
-    "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
+  const cos = "https://xcdesign-1306237972.cos.ap-guangzhou.myqcloud.com/";
   const root = document.getElementById("gallery-root");
   let galleryClosing = false;
 
+  // GIF 图片序号列表
   const gifIds = new Set([25, 26, 37, 48, 49]);
 
+  // 非 16:9 图片的比例特例表（可根据需要补充，不填也会在加载后自动纠正）
+  // 格式： 图片序号: "宽度 / 高度"
+  const specialRatios = {
+    // 5: "9 / 16",  // 示例：第 5 张是竖图
+    // 12: "4 / 3",  // 示例：第 12 张是 4:3
+  };
+
+  // ==========================================
+  // 1. 视口监听器：实现无缝加载与内存回收
+  // ==========================================
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const img = entry.target;
+      const container = img.parentElement; // 获取外层 <a> 标签
+      const realSrc = img.dataset.src;
+
+      if (entry.isIntersecting) {
+        // 进入视口：触发原图加载
+        if (!img.src) {
+          img.src = realSrc;
+          
+          // 图片首次加载成功后，获取真实尺寸并精细修正外层比例
+          img.onload = () => {
+            if (img.naturalWidth && img.naturalHeight) {
+              container.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+            }
+          };
+        }
+      } else {
+        // 离开视口：及时卸载原图，释放内存与 GPU 纹理，防止崩页面
+        // 由于 container 的 aspectRatio 已经被锁定，页面高度不会塌陷
+        if (img.src) {
+          img.removeAttribute('src'); 
+        }
+      }
+    });
+  }, {
+    // 预加载缓冲区：上下各扩展 1.5 倍屏幕高度，保证快速滚动时不卡顿、不出空白
+    rootMargin: '150% 0px' 
+  });
+
+  // ==========================================
+  // 2. 动态生成 DOM 节点
+  // ==========================================
   for (let i = 1; i <= 50; i++) {
     const extension = gifIds.has(i) ? "gif" : "png";
     const src = `${cos}${i}.${extension}`;
+    
     const a = document.createElement("a");
     a.className = "media-item";
     a.dataset.fancybox = "gallery";
-    a.href = src;
-    a.innerHTML = `<img src="${src}" loading="lazy" alt="作品 ${i}">`;
+    a.href = src; 
+    
+    // 锁死容器布局模式
+    a.style.display = "block";
+    a.style.width = "100%";
+    // 优先取特例比例，默认采用大多数图片的 16:9 占位，防止首次滚动页面跳动
+    a.style.aspectRatio = specialRatios[i] ? specialRatios[i] : "16 / 9";
 
+    const img = document.createElement("img");
+    img.dataset.src = src; // 将原图地址存在 dataset 中
+    img.alt = `作品 ${i}`;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover"; 
+    
+    a.appendChild(img);
     root.appendChild(a);
+
+    // 注册监听
+    observer.observe(img);
   }
 
+  // ==========================================
+  // 3. Fancybox 配置优化（关闭预加载与底部缩略图）
+  // ==========================================
   Fancybox.bind("[data-fancybox='gallery']", {
     backdropColor: "auto",
-    animated: false,
+    // animated: false,
+    showClass: "f-fadeIn",
+    hideClass: "f-fadeOut",
+
+    // 禁用 Fancybox 自动预加载多张大图，避免瞬间撑爆 GPU
+    preload: 0, 
 
     Image: {
-      lazy: false,
+      lazy: true,
     },
 
     Toolbar: {
       display: {
         left: ["infobar"],
-        right: ["thumbs", "fullscreen", "close"]
+        // 移除 thumbs (缩略图按钮)，避免 Fancybox 批量解析 50 张全尺寸图片
+        right: ["fullscreen", "close"] 
       }
     },
 
-    Thumbs: {
-      autoStart: false
-    },
+    // 强制关闭底部缩略图面板，节约显存
+    Thumbs: false,
 
     on: {
+      reveal: () => {
+        // 当大图完全展开时，给 body 加上标记，瞬间让底部的 hover 失效，防止尺寸冲突
+        document.body.classList.add("is-fancybox-active");
+      },
       closing: () => {
         galleryClosing = true;
       },
       destroy: () => {
         galleryClosing = false;
+        // 销毁后恢复 body 状态
+        document.body.classList.remove("is-fancybox-active");
       }
     },
 
@@ -274,16 +366,15 @@
     }
   });
 
-  // ======================
-  // 安全屏蔽：右键/控制台/控制台网络
-  // ======================
-
-  // 1. 屏蔽右键菜单 (contextmenu)
+  // ==========================================
+  // 4. 事件防护处理
+  // ==========================================
+  // 屏蔽右键菜单
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
 
-  // 关闭过程尚未销毁实例时，阻止新的画廊实例重入
+  // 关闭画廊过程中的防重入处理
   document.addEventListener('click', function(e) {
     if (galleryClosing && e.target.closest("[data-fancybox='gallery']")) {
       e.preventDefault();
@@ -291,25 +382,12 @@
     }
   }, true);
 
-  // 2. 屏蔽控制台 (F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.)
-  // 这种方法只能阻止通过键盘快捷键打开，但仍然是必要的防御措施
+  // 屏蔽开发者工具常用快捷键
   document.onkeydown = function(e) {
-    // F12
-    if (e.keyCode == 123) {
-      return false;
-    }
-    // Ctrl+Shift+I (或 Cmd+Option+I)
-    if (e.ctrlKey && e.shiftKey && e.keyCode == 73) {
-      return false;
-    }
-    // Ctrl+Shift+J (或 Cmd+Option+J)
-    if (e.ctrlKey && e.shiftKey && e.keyCode == 74) {
-      return false;
-    }
-    // Ctrl+U (查看源代码)
-    if (e.ctrlKey && e.keyCode == 85) {
-      return false;
-    }
+    if (e.keyCode == 123) return false; // F12
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 73) return false; // Ctrl+Shift+I
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 74) return false; // Ctrl+Shift+J
+    if (e.ctrlKey && e.keyCode == 85) return false; // Ctrl+U
   };
 
 </script>
